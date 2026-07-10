@@ -18,6 +18,7 @@ const userSchema = new mongoose.Schema(
       pincode: { type: String, default: '' },
     },
     isActive: { type: Boolean, default: true },
+    walletBalance: { type: Number, default: 0, min: 0 },
     resetPasswordToken: { type: String, select: false },
     resetPasswordExpiry: { type: Date, select: false },
   },

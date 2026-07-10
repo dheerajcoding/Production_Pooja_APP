@@ -13,8 +13,7 @@ router.post('/session/request',                protect, authorize('user'),   ctr
 router.get( '/session/active',                 protect, authorize('user'),   ctrl.getMyActiveSession);
 router.get( '/sessions/my',                    protect, authorize('user'),   ctrl.getMySessionHistory);
 router.put( '/session/:id/cancel',             protect, authorize('user'),   ctrl.cancelRequest);
-router.post('/session/:id/pay/create',         protect, authorize('user'),   ctrl.createBlockPayment);
-router.post('/session/:id/pay/verify',         protect, authorize('user'),   ctrl.verifyBlockPayment);
+router.post('/session/:id/start',              protect, authorize('user'),   ctrl.startChatFromWallet);
 
 // ── Pandit ───────────────────────────────────────────────────
 router.put('/pandit/toggle-live',              protect, authorize('pandit'), ctrl.toggleLive);

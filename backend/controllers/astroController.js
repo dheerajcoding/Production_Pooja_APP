@@ -1,14 +1,9 @@
-const Pandit       = require('../models/Pandit');
-const AstroSession = require('../models/AstroSession');
-const Razorpay     = require('razorpay');
-const crypto       = require('crypto');
+const Pandit             = require('../models/Pandit');
+const AstroSession       = require('../models/AstroSession');
+const User               = require('../models/User');
+const WalletTransaction  = require('../models/WalletTransaction');
 
-const getRazorpay = () => new Razorpay({
-  key_id:     process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET,
-});
-
-const BLOCK_MINUTES = 10; // fixed block size
+const BLOCK_MINUTES = 10; // legacy field kept for backward compatibility on schema
 
 /* ─────────────────────────────────────────────
    PUBLIC — list astrologers (live + offline)
@@ -113,86 +108,78 @@ exports.getSessionById = async (req, res) => {
 };
 
 /* ─────────────────────────────────────────────
-   USER — create Razorpay order for 10-min block
-   (works for initial payment after acceptance AND recharge)
+   USER — start / resume chat from wallet
+   Reserves the maximum whole minutes the user's
+   wallet can afford at the current per-minute rate,
+   deducts that amount, sets paidUntil accordingly.
 ───────────────────────────────────────────── */
-exports.createBlockPayment = async (req, res) => {
+exports.startChatFromWallet = async (req, res) => {
   const session = await AstroSession.findById(req.params.id);
   if (!session) return res.status(404).json({ success: false, message: 'Session not found.' });
   if (session.userId.toString() !== req.user._id.toString()) return res.status(403).json({ success: false, message: 'Access denied.' });
 
   const allowedStatuses = ['accepted', 'expired'];
   if (!allowedStatuses.includes(session.status)) {
-    return res.status(400).json({ success: false, message: `Cannot pay for a session with status: ${session.status}.` });
+    return res.status(400).json({ success: false, message: `Cannot start chat for a session with status: ${session.status}.` });
   }
 
-  const blockAmount = BLOCK_MINUTES * session.ratePerMinute;
+  const user = await User.findById(req.user._id);
+  if (!user) return res.status(404).json({ success: false, message: 'User not found.' });
 
-  // receipt must be ≤ 40 chars — use last 8 chars of session ID + epoch seconds
-  const receipt = `as_${String(session._id).slice(-8)}_${Math.floor(Date.now() / 1000)}`;
+  const balance      = user.walletBalance || 0;
+  const rate         = session.ratePerMinute;
+  const affordable   = Math.floor(balance / rate);
 
-  const order = await getRazorpay().orders.create({
-    amount:   Math.round(blockAmount * 100),
-    currency: 'INR',
-    receipt,
-  });
-
-  session.razorpayOrderId = order.id;
-  await session.save();
-
-  res.json({
-    success: true,
-    data: {
-      orderId:      order.id,
-      amount:       order.amount,
-      currency:     order.currency,
-      sessionId:    session._id,
-      blockMinutes: BLOCK_MINUTES,
-      blockAmount,
-      keyId:        process.env.RAZORPAY_KEY_ID,
-    },
-  });
-};
-
-/* ─────────────────────────────────────────────
-   USER — verify payment → activate / extend session
-───────────────────────────────────────────── */
-exports.verifyBlockPayment = async (req, res) => {
-  const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
-
-  const expected = crypto
-    .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
-    .update(`${razorpay_order_id}|${razorpay_payment_id}`)
-    .digest('hex');
-
-  if (expected !== razorpay_signature) {
-    return res.status(400).json({ success: false, message: 'Payment verification failed.' });
+  if (affordable < 1) {
+    return res.status(400).json({
+      success:            false,
+      message:            'Insufficient wallet balance. Please top up your wallet to continue.',
+      code:               'INSUFFICIENT_BALANCE',
+      walletBalance:      balance,
+      ratePerMinute:      rate,
+      minimumRequired:    rate,
+    });
   }
 
-  const session = await AstroSession.findById(req.params.id);
-  if (!session) return res.status(404).json({ success: false, message: 'Session not found.' });
-
-  const blockAmount  = BLOCK_MINUTES * session.ratePerMinute;
   const now          = new Date();
+  const deductAmount = affordable * rate;
 
-  // For recharge: extend from now; for initial: set startTime
-  const baseTime = session.status === 'expired' ? now : now;
+  user.walletBalance = balance - deductAmount;
+  await user.save();
 
   session.status           = 'active';
-  session.paidUntil        = new Date(baseTime.getTime() + BLOCK_MINUTES * 60 * 1000);
-  session.totalPaidMinutes = (session.totalPaidMinutes || 0) + BLOCK_MINUTES;
-  session.totalPaidAmount  = (session.totalPaidAmount  || 0) + blockAmount;
-  session.lastPaymentId    = razorpay_payment_id;
+  session.paidUntil        = new Date(now.getTime() + affordable * 60 * 1000);
+  session.totalPaidMinutes = (session.totalPaidMinutes || 0) + affordable;
+  session.totalPaidAmount  = (session.totalPaidAmount  || 0) + deductAmount;
   if (!session.startTime) session.startTime = now;
 
   await session.save();
+
+  await WalletTransaction.create({
+    userId:        user._id,
+    type:          'debit',
+    amount:        deductAmount,
+    balanceAfter:  user.walletBalance,
+    referenceType: 'astro_session',
+    referenceId:   session._id,
+    description:   `Astrology chat — ${affordable} min reserved @ ₹${rate}/min`,
+  });
 
   await session.populate([
     { path: 'panditId', populate: { path: 'userId', select: 'name' }, select: 'userId photo astroRate' },
     { path: 'userId', select: 'name' },
   ]);
 
-  res.json({ success: true, data: session, message: `Chat started! You have ${BLOCK_MINUTES} minutes.` });
+  res.json({
+    success: true,
+    data: {
+      session,
+      walletBalance:    user.walletBalance,
+      minutesReserved:  affordable,
+      amountDeducted:   deductAmount,
+    },
+    message: `Chat started! ${affordable} minute${affordable === 1 ? '' : 's'} reserved from your wallet.`,
+  });
 };
 
 /* ─────────────────────────────────────────────
@@ -220,13 +207,13 @@ exports.sendMessage = async (req, res) => {
 
   const session = await AstroSession.findById(req.params.id);
   if (!session)                    return res.status(404).json({ success: false, message: 'Session not found.' });
-  if (session.status !== 'active') return res.status(400).json({ success: false, message: 'Chat is not active. Please pay to start.' });
+  if (session.status !== 'active') return res.status(400).json({ success: false, message: 'Chat is not active. Please start the chat from your wallet.' });
 
   // Auto-expire if paidUntil has passed
   if (session.paidUntil && new Date() > new Date(session.paidUntil)) {
     session.status = 'expired';
     await session.save();
-    return res.status(400).json({ success: false, message: 'Your 10 minutes are up. Please recharge to continue.' });
+    return res.status(400).json({ success: false, message: 'Your reserved minutes are up. Please top up your wallet and resume to continue.' });
   }
 
   const senderRole = req.user.role === 'user' ? 'user' : 'pandit';
@@ -245,13 +232,13 @@ exports.sendImageMessage = async (req, res) => {
 
   const session = await AstroSession.findById(req.params.id);
   if (!session)                    return res.status(404).json({ success: false, message: 'Session not found.' });
-  if (session.status !== 'active') return res.status(400).json({ success: false, message: 'Chat is not active. Please pay to start.' });
+  if (session.status !== 'active') return res.status(400).json({ success: false, message: 'Chat is not active. Please start the chat from your wallet.' });
 
   // Auto-expire check
   if (session.paidUntil && new Date() > new Date(session.paidUntil)) {
     session.status = 'expired';
     await session.save();
-    return res.status(400).json({ success: false, message: 'Your 10 minutes are up. Please recharge to continue.' });
+    return res.status(400).json({ success: false, message: 'Your reserved minutes are up. Please top up your wallet and resume to continue.' });
   }
 
   const senderRole = req.user.role === 'user' ? 'user' : 'pandit';
@@ -319,12 +306,62 @@ exports.endSession = async (req, res) => {
     return res.status(400).json({ success: false, message: 'Session is already ended.' });
   }
 
+  const now = new Date();
+
+  // Refund unused reserved minutes back to the user's wallet.
+  // Only applies when the session was active with paidUntil in the future.
+  let refundAmount   = 0;
+  let refundMinutes  = 0;
+  let newBalance     = null;
+
+  if (session.status === 'active' && session.paidUntil && new Date(session.paidUntil) > now) {
+    const remainingMs = new Date(session.paidUntil).getTime() - now.getTime();
+    refundMinutes = Math.floor(remainingMs / 60000); // whole unused minutes only
+    if (refundMinutes > 0) {
+      refundAmount = refundMinutes * (session.ratePerMinute || 0);
+    }
+  }
+
   session.status  = 'ended';
-  session.endTime = new Date();
+  session.endTime = now;
   session.endedBy = req.user.role === 'admin' ? 'admin' : req.user.role;
+
+  if (refundAmount > 0) {
+    session.totalPaidMinutes = Math.max(0, (session.totalPaidMinutes || 0) - refundMinutes);
+    session.totalPaidAmount  = Math.max(0, (session.totalPaidAmount  || 0) - refundAmount);
+
+    // Credit user's wallet — refund goes to the session's user, not the actor
+    // (endedBy could be pandit/admin, but the money belongs to the user).
+    const user = await User.findById(session.userId);
+    if (user) {
+      user.walletBalance = (user.walletBalance || 0) + refundAmount;
+      await user.save();
+      newBalance = user.walletBalance;
+
+      await WalletTransaction.create({
+        userId:        user._id,
+        type:          'refund',
+        amount:        refundAmount,
+        balanceAfter:  user.walletBalance,
+        referenceType: 'astro_session',
+        referenceId:   session._id,
+        description:   `Refund — ${refundMinutes} unused min from ended session`,
+      });
+    }
+  }
+
   await session.save();
 
-  res.json({ success: true, data: session, message: 'Session ended.' });
+  res.json({
+    success: true,
+    data: session,
+    refund: refundAmount > 0
+      ? { minutes: refundMinutes, amount: refundAmount, walletBalance: newBalance }
+      : null,
+    message: refundAmount > 0
+      ? `Session ended. ₹${refundAmount} refunded to wallet for ${refundMinutes} unused minute${refundMinutes === 1 ? '' : 's'}.`
+      : 'Session ended.',
+  });
 };
 
 /* ─────────────────────────────────────────────

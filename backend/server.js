@@ -24,6 +24,7 @@ const orderRoutes       = require('./routes/order');
 const onlinePoojaRoutes    = require('./routes/onlinePooja');
 const offlineBookingRoutes = require('./routes/offlineBooking');
 const astroRoutes          = require('./routes/astro');
+const walletRoutes         = require('./routes/wallet');
 
 const app = express();
 
@@ -81,6 +82,7 @@ app.use('/api/orders',        orderRoutes);
 app.use('/api/online-poojas',    onlinePoojaRoutes);
 app.use('/api/offline-bookings', offlineBookingRoutes);
 app.use('/api/astro',            astroRoutes);
+app.use('/api/wallet',           walletRoutes);
 
 app.use(errorHandler);
 
