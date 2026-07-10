@@ -33,7 +33,11 @@ const astroSessionSchema = new mongoose.Schema(
     blockMinutes:   { type: Number, default: 10 },              // always 10 min per block
 
     // Tracks paid time
-    paidUntil:      { type: Date },       // active until this moment; frontend counts down to this
+    // paidUntil is DYNAMIC in per-minute billing: recomputed on each poll as
+    // now + floor(walletBalance / ratePerMinute) * 60000 — i.e. how much
+    // runway the user has AT CURRENT wallet balance. Frontend counts down to it.
+    paidUntil:        { type: Date },
+    lastChargedAt:    { type: Date },     // anchor advanced in whole-minute chunks by chargeAccruedUsage
     totalPaidMinutes: { type: Number, default: 0 },
     totalPaidAmount:  { type: Number, default: 0 },
 
