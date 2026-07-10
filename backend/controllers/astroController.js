@@ -411,9 +411,15 @@ exports.endSession = async (req, res) => {
   session.endedBy = req.user.role === 'admin' ? 'admin' : req.user.role;
   await session.save();
 
+  // Fetch the freshly-updated wallet balance so the client doesn't have to
+  // make a second round-trip to render the post-charge amount.
+  const userAfter = await User.findById(session.userId).select('walletBalance');
+  const walletBalance = userAfter?.walletBalance ?? null;
+
   res.json({
     success:  true,
     data:     session,
+    walletBalance,
     message:  finalCharge > 0
       ? `Session ended. Final partial minute rounded up and charged.`
       : 'Session ended.',
