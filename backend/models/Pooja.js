@@ -4,11 +4,11 @@ const poojaSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true, maxlength: 200 },
     description: { type: String, required: true, maxlength: 2000 },
-    category: {
-      type: String,
-      required: true,
-      enum: ['Griha Pravesh', 'Satyanarayan Katha', 'Navratri', 'Ganesh Puja', 'Laxmi Puja', 'Shradh', 'Vivah', 'Namkaran', 'Mundan', 'Other'],
-    },
+    // No enum — categories are managed dynamically via /api/pooja-categories
+    // by admin. Stored as the display name (e.g., "Ganesh Puja"). If admin
+    // renames a category, poojaCategoryController.update cascades the rename
+    // to all poojas that referenced it.
+    category: { type: String, required: true, trim: true, maxlength: 100 },
     duration: { type: String, required: true },
     price: { type: Number, required: true, min: 0 },
     image: { type: String, default: '' },

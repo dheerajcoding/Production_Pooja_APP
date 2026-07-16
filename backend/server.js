@@ -26,6 +26,8 @@ const offlineBookingRoutes = require('./routes/offlineBooking');
 const astroRoutes          = require('./routes/astro');
 const walletRoutes         = require('./routes/wallet');
 const festivalRoutes       = require('./routes/festival');
+const poojaCategoryRoutes  = require('./routes/poojaCategory');
+const { seedDefaults: seedPoojaCategories } = require('./controllers/poojaCategoryController');
 
 const app = express();
 
@@ -85,10 +87,18 @@ app.use('/api/offline-bookings', offlineBookingRoutes);
 app.use('/api/astro',            astroRoutes);
 app.use('/api/wallet',           walletRoutes);
 app.use('/api/festivals',        festivalRoutes);
+app.use('/api/pooja-categories', poojaCategoryRoutes);
 
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`Server running on port ${PORT} [${process.env.NODE_ENV}]`);
+  // First-boot seeder: populate default pooja categories if the collection
+  // is empty. Idempotent — subsequent boots are no-ops.
+  try {
+    await seedPoojaCategories();
+  } catch (err) {
+    console.warn('PoojaCategory seed skipped:', err.message);
+  }
 });
