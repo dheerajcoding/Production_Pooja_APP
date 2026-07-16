@@ -23,6 +23,37 @@ const panditSchema = new mongoose.Schema(
     isAstrologer:  { type: Boolean, default: false },       // enabled by admin
     astroRate:     { type: Number,  default: 10, min: 1 },  // ₹ per minute, set by admin
     isLiveNow:     { type: Boolean, default: false },       // pandit toggled live
+
+    // Identity verification (KYC)
+    aadhaarNumber: { type: String, default: '', trim: true },  // 12 digits
+    panNumber:     { type: String, default: '', trim: true, uppercase: true },  // 10 chars
+
+    // Professional details
+    education:     { type: String, default: '' },  // Guru / Gurukul / Sanskrit education
+
+    // Address / service area
+    currentAddress: {
+      street:  { type: String, default: '' },
+      city:    { type: String, default: '' },
+      state:   { type: String, default: '' },
+      pincode: { type: String, default: '' },
+    },
+    operationalCity: { type: String, default: '' },
+
+    // Pricing
+    basicDakshinaRate: { type: Number, default: 0, min: 0 },  // base rate for pooja bookings
+
+    // Bank details for settlements
+    bankDetails: {
+      accountHolderName: { type: String, default: '' },
+      accountNumber:     { type: String, default: '', trim: true },
+      ifscCode:          { type: String, default: '', trim: true, uppercase: true },
+      upiId:             { type: String, default: '', trim: true },
+    },
+
+    // Onboarding declaration
+    declarationAccepted:   { type: Boolean, default: false },
+    declarationAcceptedAt: { type: Date },
   },
   { timestamps: true }
 );

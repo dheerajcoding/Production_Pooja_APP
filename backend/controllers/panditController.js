@@ -48,19 +48,88 @@ exports.getPanditById = async (req, res) => {
 exports.getMyProfile = async (req, res) => {
   const pandit = await Pandit.findOne({ userId: req.user._id }).populate('userId', 'name email phone profilePhoto address');
   if (!pandit) return res.status(404).json({ success: false, message: 'Pandit profile not found.' });
+
+  // Backfill: existing pandits who uploaded via /pandits/profile before the
+  // mirror was added have pandit.photo set but user.profilePhoto blank. Sync
+  // once so every user-facing screen (browse, bookings, admin, notifications)
+  // sees their photo through either field.
+  if (pandit.photo && (!pandit.userId?.profilePhoto || pandit.userId.profilePhoto !== pandit.photo)) {
+    await User.findByIdAndUpdate(pandit.userId._id || pandit.userId, { profilePhoto: pandit.photo });
+    if (pandit.userId) pandit.userId.profilePhoto = pandit.photo;
+  }
+
   res.json({ success: true, data: pandit });
 };
 
 exports.updateMyProfile = async (req, res) => {
-  const { bio, experience, languages, expertise, location } = req.body;
+  const {
+    bio, experience, languages, expertise, location,
+    aadhaarNumber, panNumber, education, operationalCity, basicDakshinaRate,
+    currentAddress, bankDetails, declarationAccepted,
+  } = req.body;
   const pandit = await Pandit.findOne({ userId: req.user._id });
   if (!pandit) return res.status(404).json({ success: false, message: 'Pandit profile not found.' });
 
+  // Existing fields
   if (bio !== undefined) pandit.bio = bio;
   if (experience !== undefined) pandit.experience = experience;
   if (languages !== undefined) pandit.languages = Array.isArray(languages) ? languages : languages.split(',').map((l) => l.trim());
   if (expertise !== undefined) pandit.expertise = Array.isArray(expertise) ? expertise : expertise.split(',').map((e) => e.trim());
   if (location !== undefined) pandit.location = location;
+
+  // Identity verification (light validation — full KYC verification is admin-side)
+  if (aadhaarNumber !== undefined) {
+    const clean = String(aadhaarNumber).replace(/\s/g, '');
+    if (clean && !/^\d{12}$/.test(clean)) {
+      return res.status(400).json({ success: false, message: 'Aadhaar must be exactly 12 digits.' });
+    }
+    pandit.aadhaarNumber = clean;
+  }
+  if (panNumber !== undefined) {
+    const clean = String(panNumber).toUpperCase().trim();
+    if (clean && !/^[A-Z]{5}\d{4}[A-Z]$/.test(clean)) {
+      return res.status(400).json({ success: false, message: 'PAN must match format AAAAA9999A.' });
+    }
+    pandit.panNumber = clean;
+  }
+
+  // Professional / service
+  if (education !== undefined)         pandit.education = education;
+  if (operationalCity !== undefined)   pandit.operationalCity = operationalCity;
+  if (basicDakshinaRate !== undefined) pandit.basicDakshinaRate = Number(basicDakshinaRate) || 0;
+
+  // Address (multipart FormData delivers nested objects as JSON strings)
+  let addrObj = currentAddress;
+  if (typeof addrObj === 'string') {
+    try { addrObj = JSON.parse(addrObj); } catch { addrObj = null; }
+  }
+  if (addrObj && typeof addrObj === 'object') {
+    pandit.currentAddress = { ...(pandit.currentAddress?.toObject?.() || pandit.currentAddress || {}), ...addrObj };
+  }
+
+  // Bank details for settlements
+  let bankObj = bankDetails;
+  if (typeof bankObj === 'string') {
+    try { bankObj = JSON.parse(bankObj); } catch { bankObj = null; }
+  }
+  if (bankObj && typeof bankObj === 'object') {
+    const merged = { ...(pandit.bankDetails?.toObject?.() || pandit.bankDetails || {}), ...bankObj };
+    if (merged.ifscCode) {
+      const ifsc = String(merged.ifscCode).toUpperCase().trim();
+      if (!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(ifsc)) {
+        return res.status(400).json({ success: false, message: 'IFSC code format is invalid.' });
+      }
+      merged.ifscCode = ifsc;
+    }
+    pandit.bankDetails = merged;
+  }
+
+  // Declaration checkbox — record timestamp on first true
+  if (declarationAccepted !== undefined) {
+    const accepted = Boolean(declarationAccepted);
+    if (accepted && !pandit.declarationAccepted) pandit.declarationAcceptedAt = new Date();
+    pandit.declarationAccepted = accepted;
+  }
 
   if (req.file) {
     deleteOldFile(pandit.photoPublicId);
@@ -74,6 +143,10 @@ exports.updateMyProfile = async (req, res) => {
   const { name, phone } = req.body;
   if (name) user.name = name;
   if (phone) user.phone = phone;
+  // Mirror the pandit's photo onto the User doc so every user-facing screen
+  // that reads userId.profilePhoto (browsing pandits, booking cards, admin
+  // lists, notifications) sees the same image the pandit uploaded.
+  if (req.file) user.profilePhoto = pandit.photo;
   await user.save();
 
   res.json({ success: true, message: 'Profile updated.', data: pandit });
