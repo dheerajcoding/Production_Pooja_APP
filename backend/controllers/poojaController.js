@@ -15,10 +15,11 @@ const deleteOldFile = (filename) => {
 };
 
 exports.getAllPoojas = async (req, res) => {
-  const { category, page = 1, limit = 12, search } = req.query;
+  const { category, page = 1, limit = 12, search, featured } = req.query;
   const query = { isActive: true };
   if (category) query.category = category;
   if (search) query.name = { $regex: search, $options: 'i' };
+  if (featured === 'true') query.isFeatured = true;
 
   const poojas = await Pooja.find(query)
     .sort({ bookingCount: -1 })
@@ -69,7 +70,7 @@ exports.updatePooja = async (req, res) => {
   const pooja = await Pooja.findById(req.params.id);
   if (!pooja) return res.status(404).json({ success: false, message: 'Pooja not found.' });
 
-  const { name, description, category, duration, price, includedItems, isActive } = req.body;
+  const { name, description, category, duration, price, includedItems, isActive, isFeatured } = req.body;
 
   if (name) pooja.name = name;
   if (description) pooja.description = description;
@@ -77,6 +78,7 @@ exports.updatePooja = async (req, res) => {
   if (duration) pooja.duration = duration;
   if (price) pooja.price = parseFloat(price);
   if (isActive !== undefined) pooja.isActive = isActive === 'true' || isActive === true;
+  if (isFeatured !== undefined) pooja.isFeatured = isFeatured === 'true' || isFeatured === true;
   if (includedItems) pooja.includedItems = Array.isArray(includedItems) ? includedItems : includedItems.split(',').map((i) => i.trim());
 
   if (req.file) {

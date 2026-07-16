@@ -15,6 +15,9 @@ const poojaSchema = new mongoose.Schema(
     imagePublicId: { type: String, default: '' },
     includedItems: [{ type: String }],
     isActive: { type: Boolean, default: true },
+    // Whether this pooja appears in the user dashboard's featured banner slider.
+    // Admin toggles via PUT /api/poojas/:id { isFeatured: true }.
+    isFeatured: { type: Boolean, default: false },
     bookingCount: { type: Number, default: 0 },
   },
   { timestamps: true }
