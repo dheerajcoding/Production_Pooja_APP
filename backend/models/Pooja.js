@@ -18,6 +18,13 @@ const poojaSchema = new mongoose.Schema(
     // Whether this pooja appears in the user dashboard's featured banner slider.
     // Admin toggles via PUT /api/poojas/:id { isFeatured: true }.
     isFeatured: { type: Boolean, default: false },
+    // Package tier — 'premium', 'standard', or '' (regular / uncategorized).
+    // Premium and Standard show as their own tabs on BrowsePoojas.
+    packageTier: {
+      type: String,
+      enum: ['', 'premium', 'standard'],
+      default: '',
+    },
     bookingCount: { type: Number, default: 0 },
   },
   { timestamps: true }
