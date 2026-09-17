@@ -65,3 +65,83 @@ exports.getMyBookings = async (req, res) => {
     },
   });
 };
+
+// Public web form deletion request (Google Play Data Safety compliant)
+exports.requestAccountDeletion = async (req, res) => {
+  const { name, email, phone, reason } = req.body;
+
+  if (!email || !email.includes('@')) {
+    return res.status(400).json({ success: false, message: 'A valid email address is required.' });
+  }
+
+  const DeletionRequest = require('../models/DeletionRequest');
+
+  const ipAddress = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
+
+  const deletionReq = await DeletionRequest.create({
+    name: name || '',
+    email: email.toLowerCase().trim(),
+    phone: phone || '',
+    reason: reason || '',
+    source: 'web_form',
+    ipAddress: typeof ipAddress === 'string' ? ipAddress : '',
+    status: 'pending',
+  });
+
+  res.json({
+    success: true,
+    message: 'Your account deletion request has been submitted successfully. In accordance with our policy, your account and personal data will be processed and removed within 30 days.',
+    data: { id: deletionReq._id, email: deletionReq.email },
+  });
+};
+
+// In-app user account deletion (Authenticated)
+exports.deleteMyAccount = async (req, res) => {
+  const userId = req.user._id;
+  const user = await User.findById(userId);
+
+  if (!user) {
+    return res.status(404).json({ success: false, message: 'User not found.' });
+  }
+
+  // Prevent accidental admin account deletion
+  if (user.role === 'admin') {
+    return res.status(403).json({ success: false, message: 'Admin account cannot be deleted via app.' });
+  }
+
+  // 1. Delete profile photo from disk if present
+  deleteOldFile(user.profilePhotoPublicId);
+
+  // 2. Clean up user's active cart
+  try {
+    const Cart = require('../models/Cart');
+    await Cart.deleteMany({ userId });
+  } catch (err) {
+    console.warn('Cart cleanup warning:', err.message);
+  }
+
+  // 3. Log deletion request as completed
+  try {
+    const DeletionRequest = require('../models/DeletionRequest');
+    await DeletionRequest.create({
+      name: user.name,
+      email: user.email,
+      phone: user.phone || '',
+      reason: req.body?.reason || 'User requested deletion via mobile app',
+      source: 'in_app',
+      status: 'completed',
+      processedAt: new Date(),
+    });
+  } catch (err) {
+    console.warn('DeletionRequest log warning:', err.message);
+  }
+
+  // 4. Delete user record
+  await User.findByIdAndDelete(userId);
+
+  res.json({
+    success: true,
+    message: 'Your account and associated personal data have been permanently deleted.',
+  });
+};
+

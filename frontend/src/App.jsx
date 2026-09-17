@@ -43,6 +43,11 @@ import AdminAstrology from './pages/admin/Astrology';
 import LandingPage from './pages/Landing';
 import LoadingSpinner from './components/common/LoadingSpinner';
 
+import AccountDeletion from './pages/legal/AccountDeletion';
+import PrivacyPolicy from './pages/legal/PrivacyPolicy';
+import TermsConditions from './pages/legal/TermsConditions';
+import RefundPolicy from './pages/legal/RefundPolicy';
+
 const ProtectedRoute = ({ children, roles }) => {
   const { user, loading } = useAuth();
   if (loading) return <LoadingSpinner fullScreen />;
@@ -62,6 +67,19 @@ export default function App() {
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password/:token" element={<ResetPassword />} />
+
+      {/* Public Legal & Google Play Compliance Routes */}
+      <Route path="/delete-account" element={<AccountDeletion />} />
+      <Route path="/account-deletion" element={<AccountDeletion />} />
+      <Route path="/data-deletion" element={<AccountDeletion />} />
+      <Route path="/privacy" element={<PrivacyPolicy />} />
+      <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+      <Route path="/terms" element={<TermsConditions />} />
+      <Route path="/terms-and-conditions" element={<TermsConditions />} />
+      <Route path="/terms-of-service" element={<TermsConditions />} />
+      <Route path="/refund-policy" element={<RefundPolicy />} />
+      <Route path="/cancellation-policy" element={<RefundPolicy />} />
+
 
       {/* User Routes */}
       <Route path="/dashboard" element={<ProtectedRoute roles={['user']}><UserLayout /></ProtectedRoute>}>

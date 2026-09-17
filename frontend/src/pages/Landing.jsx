@@ -117,13 +117,32 @@ export default function Landing() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-gray-400 py-8 px-4 text-center text-sm">
-        <div className="flex items-center justify-center gap-2 mb-2">
-          <span className="text-xl">🪔</span>
-          <span className="text-white font-semibold">Saral Pooja</span>
+      <footer className="bg-gray-900 text-gray-400 py-10 px-4 text-sm">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="text-center md:text-left">
+            <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
+              <span className="text-2xl">🪔</span>
+              <span className="text-white text-lg font-bold">Saral Pooja</span>
+            </div>
+            <p className="text-xs text-gray-400 max-w-sm">
+              Authentic Vedic Pujas & Spiritual Services delivered at your doorstep and online.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap justify-center gap-6 text-xs">
+            <Link to="/privacy-policy" className="hover:text-white transition-colors">Privacy Policy</Link>
+            <Link to="/terms-and-conditions" className="hover:text-white transition-colors">Terms of Service</Link>
+            <Link to="/refund-policy" className="hover:text-white transition-colors">Refund Policy</Link>
+            <Link to="/delete-account" className="text-orange-400 hover:text-orange-300 transition-colors font-medium">Account Deletion</Link>
+          </div>
         </div>
-        <p>© {new Date().getFullYear()} Saral Pooja. All rights reserved.</p>
+
+        <div className="max-w-6xl mx-auto border-t border-gray-800 mt-8 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-500 text-center sm:text-left">
+          <p>© {new Date().getFullYear()} Saral Pooja. All rights reserved.</p>
+          <p>Support: saralpooja.info@gmail.com · +91 70420 64094</p>
+        </div>
       </footer>
     </div>
   );
 }
+
