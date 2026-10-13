@@ -13,6 +13,8 @@ export default function ResetPassword() {
     confirm: '',
   });
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -58,11 +60,21 @@ export default function ResetPassword() {
             </div>
             <div>
               <label className="label">New Password</label>
-              <input type="password" className="input" placeholder="Min. 6 characters" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required />
+              <div className="relative">
+                <input type={showPassword ? 'text' : 'password'} className="input pr-10" placeholder="Min. 6 characters" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required />
+                <button type="button" onClick={() => setShowPassword((s) => !s)} className="absolute inset-y-0 right-0 px-3 flex items-center text-sm" tabIndex={-1}>
+                  {showPassword ? '🙈' : '👁️'}
+                </button>
+              </div>
             </div>
             <div>
               <label className="label">Confirm Password</label>
-              <input type="password" className="input" placeholder="Repeat password" value={form.confirm} onChange={(e) => setForm({ ...form, confirm: e.target.value })} required />
+              <div className="relative">
+                <input type={showConfirm ? 'text' : 'password'} className="input pr-10" placeholder="Repeat password" value={form.confirm} onChange={(e) => setForm({ ...form, confirm: e.target.value })} required />
+                <button type="button" onClick={() => setShowConfirm((s) => !s)} className="absolute inset-y-0 right-0 px-3 flex items-center text-sm" tabIndex={-1}>
+                  {showConfirm ? '🙈' : '👁️'}
+                </button>
+              </div>
             </div>
             <button type="submit" disabled={loading} className="btn-primary w-full py-2.5">
               {loading ? 'Resetting...' : 'Reset Password'}
