@@ -1,25 +1,36 @@
 import { useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../../services/api';
 
 export default function ResetPassword() {
-  const { token } = useParams();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ password: '', confirm: '' });
+  const location = useLocation();
+  const [form, setForm] = useState({
+    email: location.state?.email || '',
+    otp: '',
+    password: '',
+    confirm: '',
+  });
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!form.email) return toast.error('Email is required.');
+    if (!/^\d{6}$/.test(form.otp)) return toast.error('Enter the 6-digit code from your email.');
     if (form.password !== form.confirm) return toast.error('Passwords do not match.');
     if (form.password.length < 6) return toast.error('Password must be at least 6 characters.');
     setLoading(true);
     try {
-      await api.post(`/auth/reset-password/${token}`, { password: form.password });
+      await api.post('/auth/reset-password', {
+        email: form.email,
+        otp: form.otp,
+        password: form.password,
+      });
       toast.success('Password reset successful. Please login.');
       navigate('/login');
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Reset failed. Link may have expired.');
+      toast.error(err.response?.data?.message || 'Reset failed. The code may have expired.');
     } finally {
       setLoading(false);
     }
@@ -38,6 +49,14 @@ export default function ResetPassword() {
         <div className="card">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
+              <label className="label">Email Address</label>
+              <input type="email" className="input" placeholder="you@example.com" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />
+            </div>
+            <div>
+              <label className="label">6-Digit Code</label>
+              <input type="text" inputMode="numeric" maxLength={6} className="input tracking-widest" placeholder="123456" value={form.otp} onChange={(e) => setForm({ ...form, otp: e.target.value.replace(/\D/g, '').slice(0, 6) })} required />
+            </div>
+            <div>
               <label className="label">New Password</label>
               <input type="password" className="input" placeholder="Min. 6 characters" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required />
             </div>
@@ -48,6 +67,9 @@ export default function ResetPassword() {
             <button type="submit" disabled={loading} className="btn-primary w-full py-2.5">
               {loading ? 'Resetting...' : 'Reset Password'}
             </button>
+            <p className="text-center text-sm text-gray-500">
+              Didn't get a code? <Link to="/forgot-password" className="text-primary-600 hover:underline">Resend</Link>
+            </p>
           </form>
         </div>
       </div>

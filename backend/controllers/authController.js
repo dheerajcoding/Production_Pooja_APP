@@ -2,7 +2,7 @@ const crypto = require('crypto');
 const User = require('../models/User');
 const Pandit = require('../models/Pandit');
 const generateToken = require('../utils/generateToken');
-const { sendEmail, passwordResetTemplate } = require('../utils/email');
+const { sendEmail, passwordResetOtpTemplate } = require('../utils/email');
 
 exports.register = async (req, res) => {
   const { name, email, password, phone, role } = req.body;
@@ -86,45 +86,45 @@ exports.forgotPassword = async (req, res) => {
   const user = await User.findOne({ email });
 
   if (!user) {
-    return res.json({ success: true, message: 'If that email is registered, a reset link has been sent.' });
+    return res.json({ success: true, message: 'If that email is registered, a reset code has been sent.' });
   }
 
-  const resetToken = user.createPasswordResetToken();
+  const otp = user.createPasswordResetOTP();
   await user.save({ validateBeforeSave: false });
-
-  const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
 
   try {
     await sendEmail({
       to: user.email,
-      subject: 'Saral Pooja - Password Reset',
-      html: passwordResetTemplate(user.name, resetUrl),
+      subject: 'Saral Pooja - Password Reset Code',
+      html: passwordResetOtpTemplate(user.name, otp),
     });
   } catch (err) {
-    user.resetPasswordToken = undefined;
-    user.resetPasswordExpiry = undefined;
+    user.resetPasswordOTP = undefined;
+    user.resetPasswordOTPExpiry = undefined;
     await user.save({ validateBeforeSave: false });
     return res.status(500).json({ success: false, message: 'Email could not be sent.' });
   }
 
-  res.json({ success: true, message: 'Password reset link sent to your email.' });
+  res.json({ success: true, message: 'A 6-digit reset code has been sent to your email.' });
 };
 
 exports.resetPassword = async (req, res) => {
-  const hashedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
+  const { email, otp, password } = req.body;
+  const hashedOtp = crypto.createHash('sha256').update(otp).digest('hex');
 
   const user = await User.findOne({
-    resetPasswordToken: hashedToken,
-    resetPasswordExpiry: { $gt: Date.now() },
-  }).select('+resetPasswordToken +resetPasswordExpiry');
+    email,
+    resetPasswordOTP: hashedOtp,
+    resetPasswordOTPExpiry: { $gt: Date.now() },
+  }).select('+resetPasswordOTP +resetPasswordOTPExpiry');
 
   if (!user) {
-    return res.status(400).json({ success: false, message: 'Invalid or expired reset token.' });
+    return res.status(400).json({ success: false, message: 'Invalid or expired code.' });
   }
 
-  user.password = req.body.password;
-  user.resetPasswordToken = undefined;
-  user.resetPasswordExpiry = undefined;
+  user.password = password;
+  user.resetPasswordOTP = undefined;
+  user.resetPasswordOTPExpiry = undefined;
   await user.save();
 
   const token = generateToken({ id: user._id, role: user.role });

@@ -66,7 +66,7 @@ export default function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route path="/reset-password/:token" element={<ResetPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
 
       {/* Public Legal & Google Play Compliance Routes */}
       <Route path="/delete-account" element={<AccountDeletion />} />

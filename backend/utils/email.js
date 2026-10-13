@@ -20,16 +20,15 @@ const sendEmail = async ({ to, subject, html }) => {
   await transporter.sendMail(mailOptions);
 };
 
-const passwordResetTemplate = (name, resetUrl) => `
+const passwordResetOtpTemplate = (name, otp) => `
   <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;">
     <h2 style="color:#f97316;">Saral Pooja - Password Reset</h2>
     <p>Hello ${name},</p>
-    <p>You requested to reset your password. Click the button below to reset it:</p>
-    <a href="${resetUrl}" style="display:inline-block;background:#f97316;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;margin:16px 0;">
-      Reset Password
-    </a>
-    <p>This link expires in 30 minutes.</p>
-    <p>If you did not request this, please ignore this email.</p>
+    <p>Use the code below to reset your password. It expires in 10 minutes.</p>
+    <div style="text-align:center;margin:28px 0;">
+      <span style="display:inline-block;background:#fff7ed;border:2px dashed #f97316;color:#f97316;font-size:32px;font-weight:800;letter-spacing:8px;padding:16px 28px;border-radius:10px;">${otp}</span>
+    </div>
+    <p>If you did not request this, please ignore this email — your password will remain unchanged.</p>
     <hr style="border:none;border-top:1px solid #eee;margin:24px 0;"/>
     <p style="color:#999;font-size:12px;">© 2024 Saral Pooja. All rights reserved.</p>
   </div>
@@ -52,4 +51,4 @@ const bookingConfirmTemplate = (name, booking) => `
   </div>
 `;
 
-module.exports = { sendEmail, passwordResetTemplate, bookingConfirmTemplate };
+module.exports = { sendEmail, passwordResetOtpTemplate, bookingConfirmTemplate };

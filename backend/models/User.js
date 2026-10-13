@@ -19,8 +19,8 @@ const userSchema = new mongoose.Schema(
     },
     isActive: { type: Boolean, default: true },
     walletBalance: { type: Number, default: 0, min: 0 },
-    resetPasswordToken: { type: String, select: false },
-    resetPasswordExpiry: { type: Date, select: false },
+    resetPasswordOTP: { type: String, select: false },
+    resetPasswordOTPExpiry: { type: Date, select: false },
   },
   { timestamps: true }
 );
@@ -35,11 +35,11 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password);
 };
 
-userSchema.methods.createPasswordResetToken = function () {
-  const resetToken = crypto.randomBytes(32).toString('hex');
-  this.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
-  this.resetPasswordExpiry = Date.now() + 30 * 60 * 1000;
-  return resetToken;
+userSchema.methods.createPasswordResetOTP = function () {
+  const otp = crypto.randomInt(100000, 1000000).toString();
+  this.resetPasswordOTP = crypto.createHash('sha256').update(otp).digest('hex');
+  this.resetPasswordOTPExpiry = Date.now() + 10 * 60 * 1000;
+  return otp;
 };
 
 module.exports = mongoose.model('User', userSchema);

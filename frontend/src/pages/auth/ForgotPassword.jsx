@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../../services/api';
 
 export default function ForgotPassword() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
@@ -14,9 +15,9 @@ export default function ForgotPassword() {
     try {
       await api.post('/auth/forgot-password', { email });
       setSent(true);
-      toast.success('Reset link sent if email exists.');
+      toast.success('Reset code sent if that email is registered.');
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to send reset link.');
+      toast.error(err.response?.data?.message || 'Failed to send reset code.');
     } finally {
       setLoading(false);
     }
@@ -38,8 +39,14 @@ export default function ForgotPassword() {
             <div className="text-center py-4">
               <div className="text-5xl mb-4">📧</div>
               <h3 className="font-semibold text-gray-900 mb-2">Check your email</h3>
-              <p className="text-sm text-gray-500 mb-4">We've sent a password reset link to <strong>{email}</strong></p>
-              <Link to="/login" className="btn-primary text-sm px-6">Back to Login</Link>
+              <p className="text-sm text-gray-500 mb-4">We've sent a 6-digit reset code to <strong>{email}</strong></p>
+              <button
+                onClick={() => navigate('/reset-password', { state: { email } })}
+                className="btn-primary text-sm px-6 w-full mb-3"
+              >
+                Enter Code
+              </button>
+              <Link to="/login" className="text-primary-600 hover:underline text-sm">Back to Login</Link>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">

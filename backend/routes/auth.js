@@ -24,7 +24,9 @@ router.post('/forgot-password', [
   body('email').isEmail().withMessage('Valid email is required').normalizeEmail(),
 ], validate, forgotPassword);
 
-router.post('/reset-password/:token', [
+router.post('/reset-password', [
+  body('email').isEmail().withMessage('Valid email is required').normalizeEmail(),
+  body('otp').isLength({ min: 6, max: 6 }).withMessage('Enter the 6-digit code').isNumeric(),
   body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
 ], validate, resetPassword);
 
