@@ -32,7 +32,7 @@ export default function ForgotPassword() {
             <span className="text-2xl font-bold text-primary-600">Saral Pooja</span>
           </Link>
           <h1 className="text-2xl font-bold text-gray-900 mt-4">Forgot Password</h1>
-          <p className="text-gray-500 text-sm mt-1">Enter your email to receive a reset link</p>
+          <p className="text-gray-500 text-sm mt-1">Enter your email to receive a 6-digit reset code</p>
         </div>
         <div className="card">
           {sent ? (
