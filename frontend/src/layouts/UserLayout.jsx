@@ -47,7 +47,7 @@ export default function UserLayout() {
                 <span className="text-lg">🪔</span>
               </div>
               <div>
-                <span className="text-lg font-bold text-primary-600 leading-tight block">Saral Pooja</span>
+                <span className="text-lg font-bold text-primary-600 leading-tight block">Ritual Mitra</span>
                 <span className="text-xs font-medium" style={{ color: '#B8860B' }}>Sacred Services</span>
               </div>
             </div>
@@ -109,7 +109,7 @@ export default function UserLayout() {
             <span className="text-xl">☰</span>
           </button>
           <span className="text-2xl">🪔</span>
-          <span className="font-bold text-primary-600">Saral Pooja</span>
+          <span className="font-bold text-primary-600">Ritual Mitra</span>
         </header>
 
         <main className="flex-1 p-4 md:p-6 overflow-auto">

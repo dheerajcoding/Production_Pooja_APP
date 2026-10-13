@@ -54,7 +54,7 @@ export default function UserBookings() {
         key: keyId,
         amount,
         currency,
-        name: 'Saral Pooja',
+        name: 'Ritual Mitra',
         description: booking.poojaId?.name || 'Pooja Booking',
         order_id: orderId,
         handler: async (response) => {

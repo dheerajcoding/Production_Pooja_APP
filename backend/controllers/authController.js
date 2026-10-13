@@ -95,7 +95,7 @@ exports.forgotPassword = async (req, res) => {
   try {
     await sendEmail({
       to: user.email,
-      subject: 'Saral Pooja - Password Reset Code',
+      subject: 'Ritual Mitra - Password Reset Code',
       html: passwordResetOtpTemplate(user.name, otp),
     });
   } catch (err) {

@@ -193,7 +193,7 @@ export default function UserAstrology() {
         key:      keyId,
         amount, currency,
         order_id: orderId,
-        name:     'Saral Pooja — Astrology Chat',
+        name:     'Ritual Mitra — Astrology Chat',
         description: `10 minutes with ${panditName}`,
         handler: async (response) => {
           try {

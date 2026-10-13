@@ -1,7 +1,7 @@
 {
   "name": "saral-pooja-backend",
   "version": "1.0.0",
-  "description": "Saral Pooja Backend API",
+  "description": "Ritual Mitra Backend API",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

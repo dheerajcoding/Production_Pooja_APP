@@ -311,7 +311,7 @@ export default function UserDashboard() {
       const { data } = await api.post('/payments/create-order', { bookingId: b._id });
       const { orderId, amount, currency, keyId } = data.data;
       const rzp = new window.Razorpay({
-        key: keyId, amount, currency, name: 'Saral Pooja',
+        key: keyId, amount, currency, name: 'Ritual Mitra',
         description: b.poojaId?.name || 'Pooja Booking',
         order_id: orderId,
         handler: async (res) => {
@@ -351,7 +351,7 @@ export default function UserDashboard() {
         <div className="relative z-10 p-6 text-white">
           <p className="text-orange-200 text-xs font-medium mb-1">{dateStr}</p>
           <h1 className="text-2xl font-bold drop-shadow">Namaste, {user?.name?.split(' ')[0]} 🙏</h1>
-          <p className="text-orange-100 text-sm mt-1">Welcome to Saral Pooja. What would you like to do today?</p>
+          <p className="text-orange-100 text-sm mt-1">Welcome to Ritual Mitra. What would you like to do today?</p>
           <div className="flex gap-3 mt-4 flex-wrap">
             <Link to="/dashboard/poojas" className="bg-white text-orange-700 text-sm font-bold px-4 py-2 rounded-lg hover:bg-orange-50 transition-colors shadow">
               Browse Poojas →

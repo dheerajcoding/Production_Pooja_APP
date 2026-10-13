@@ -1,5 +1,5 @@
 #!/bin/bash
-# Auto-deployment script for Saral Pooja
+# Auto-deployment script for Ritual Mitra
 # Run on VPS: bash deploy.sh
 set -e
 
@@ -9,7 +9,7 @@ FRONTEND_DIR="$PROJECT_DIR/frontend"
 UPLOADS_DIR="$BACKEND_DIR/uploads"
 SERVER_IP="${SERVER_IP:-72.62.192.33}"
 
-echo "🚀 Deploying Saral Pooja"
+echo "🚀 Deploying Ritual Mitra"
 echo "📍 $PROJECT_DIR"
 echo ""
 

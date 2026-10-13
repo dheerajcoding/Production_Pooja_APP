@@ -29,7 +29,7 @@ export default function Landing() {
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-2xl">🪔</span>
-            <span className="text-xl font-bold text-primary-600">Saral Pooja</span>
+            <span className="text-xl font-bold text-primary-600">Ritual Mitra</span>
           </div>
           <div className="flex items-center gap-3">
             {dashboardLink ? (
@@ -109,7 +109,7 @@ export default function Landing() {
       <section className="py-16 px-4 bg-primary-500">
         <div className="max-w-3xl mx-auto text-center text-white">
           <h2 className="text-3xl font-bold mb-4">Ready to Book Your Pooja?</h2>
-          <p className="text-primary-100 mb-8">Join thousands of families who trust Saral Pooja for their spiritual needs.</p>
+          <p className="text-primary-100 mb-8">Join thousands of families who trust Ritual Mitra for their spiritual needs.</p>
           <Link to="/register" className="bg-white text-primary-600 hover:bg-primary-50 font-semibold px-8 py-3 rounded-lg transition-colors inline-block">
             Get Started – It's Free
           </Link>
@@ -122,7 +122,7 @@ export default function Landing() {
           <div className="text-center md:text-left">
             <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
               <span className="text-2xl">🪔</span>
-              <span className="text-white text-lg font-bold">Saral Pooja</span>
+              <span className="text-white text-lg font-bold">Ritual Mitra</span>
             </div>
             <p className="text-xs text-gray-400 max-w-sm">
               Authentic Vedic Pujas & Spiritual Services delivered at your doorstep and online.
@@ -138,7 +138,7 @@ export default function Landing() {
         </div>
 
         <div className="max-w-6xl mx-auto border-t border-gray-800 mt-8 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-500 text-center sm:text-left">
-          <p>© {new Date().getFullYear()} Saral Pooja. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Ritual Mitra. All rights reserved.</p>
           <p>Support: saralpooja.info@gmail.com · +91 70420 64094</p>
         </div>
       </footer>

@@ -44,7 +44,7 @@ export default function ResetPassword() {
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2">
             <span className="text-3xl">🪔</span>
-            <span className="text-2xl font-bold text-primary-600">Saral Pooja</span>
+            <span className="text-2xl font-bold text-primary-600">Ritual Mitra</span>
           </Link>
           <h1 className="text-2xl font-bold text-gray-900 mt-4">Reset Password</h1>
         </div>

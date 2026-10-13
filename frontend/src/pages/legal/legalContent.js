@@ -8,8 +8,8 @@
  */
 
 export const COMPANY_META = {
-  brand: 'Saral Pooja',
-  legalName: 'Saral Pooja',
+  brand: 'Ritual Mitra',
+  legalName: 'Ritual Mitra',
   tagline: 'Spiritual, Devotional & Astrological Services',
   address: 'Dabri, Dwarka, New Delhi - 110045, India',
   effective: '17 July 2026',
@@ -25,7 +25,7 @@ export const DELETION_SECTIONS = [
     n: 1,
     title: 'Introduction',
     body: [
-      'At Saral Pooja, we respect your right to control your personal information and your account. This Account Deletion Policy explains how you can request the deletion of your Saral Pooja account, what happens after your request is received, what information will be deleted, what information may be retained, and how we process deletion requests in accordance with applicable laws and Google Play User Data policies.',
+      'At Ritual Mitra, we respect your right to control your personal information and your account. This Account Deletion Policy explains how you can request the deletion of your Ritual Mitra account, what happens after your request is received, what information will be deleted, what information may be retained, and how we process deletion requests in accordance with applicable laws and Google Play User Data policies.',
       'We understand that there may be various reasons why a user wishes to stop using our Services. We aim to make the account and data deletion process transparent, secure, and straightforward.',
       'This Policy should be read together with our Privacy Policy, Terms and Conditions, and Refund Policy.',
     ],
@@ -34,17 +34,17 @@ export const DELETION_SECTIONS = [
     n: 2,
     title: 'Who Can Request Account Deletion',
     body: [
-      'Any registered user of the Saral Pooja Platform (including mobile app users and website users) may request the permanent deletion of their account and associated data.',
-      'To protect user privacy and prevent unauthorized account removal, deletion requests may only be submitted by the account holder or an authorized representative where permitted by applicable law. Saral Pooja may require reasonable verification of identity before processing any deletion request.',
+      'Any registered user of the Ritual Mitra Platform (including mobile app users and website users) may request the permanent deletion of their account and associated data.',
+      'To protect user privacy and prevent unauthorized account removal, deletion requests may only be submitted by the account holder or an authorized representative where permitted by applicable law. Ritual Mitra may require reasonable verification of identity before processing any deletion request.',
     ],
   },
   {
     n: 3,
     title: 'Ways to Request Account & Data Deletion',
     body: [
-      'Saral Pooja provides multiple convenient methods for users to request account and data deletion:',
+      'Ritual Mitra provides multiple convenient methods for users to request account and data deletion:',
       '1. Web Form (No App Required): You can use the interactive deletion request form on this webpage by providing your registered email and phone number. No login or app installation is required.',
-      '2. In-App Deletion: If you have the Saral Pooja mobile application, go to Profile -> Account Deletion -> tap "Delete My Account" to initiate immediate deletion.',
+      '2. In-App Deletion: If you have the Ritual Mitra mobile application, go to Profile -> Account Deletion -> tap "Delete My Account" to initiate immediate deletion.',
       '3. Email Customer Support: Send an email directly to saralpooja.info@gmail.com with the subject line "Account Deletion Request" from your registered email address.',
       '4. Phone / WhatsApp Support: Contact our customer care at +91 70420 64094.',
     ],
@@ -53,7 +53,7 @@ export const DELETION_SECTIONS = [
     n: 4,
     title: 'Verification Process',
     body: [
-      'Before permanently deleting an account, Saral Pooja may verify the identity of the person making the request to prevent unauthorized deletion and protect users against fraud.',
+      'Before permanently deleting an account, Ritual Mitra may verify the identity of the person making the request to prevent unauthorized deletion and protect users against fraud.',
       'Verification may include confirmation via registered email address, registered mobile phone number, SMS OTP, or booking reference details.',
     ],
   },
@@ -71,7 +71,7 @@ export const DELETION_SECTIONS = [
     n: 6,
     title: 'Personal Data That Will Be Permanently Deleted',
     body: [
-      'Upon account deletion, Saral Pooja will permanently delete or anonymize the following personal information:',
+      'Upon account deletion, Ritual Mitra will permanently delete or anonymize the following personal information:',
       '• Full name, email address, and phone number',
       '• Saved delivery/pooja addresses and location data',
       '• Profile photographs and uploaded images',
@@ -85,7 +85,7 @@ export const DELETION_SECTIONS = [
     n: 7,
     title: 'Data That May Be Retained and Retention Period',
     body: [
-      'Deleting your account removes all personal identity and profile information. However, Saral Pooja may retain certain limited records where required by applicable laws or for legitimate compliance purposes:',
+      'Deleting your account removes all personal identity and profile information. However, Ritual Mitra may retain certain limited records where required by applicable laws or for legitimate compliance purposes:',
       '• Statutory financial transaction records and tax invoices (retained as required by Indian taxation and accounting laws for up to 7 years).',
       '• Completed booking receipts and proof of service delivery for audit and dispute defense.',
       '• Fraud prevention records in case of reported suspicious activities.',
@@ -103,14 +103,14 @@ export const DELETION_SECTIONS = [
     n: 9,
     title: 'Refunds After Deletion',
     body: [
-      'Deleting your account does not affect your eligibility for a refund if you are entitled to one under our Refund Policy. Where a refund has been approved, Saral Pooja will process the refund to your original payment method even after account deletion.',
+      'Deleting your account does not affect your eligibility for a refund if you are entitled to one under our Refund Policy. Where a refund has been approved, Ritual Mitra will process the refund to your original payment method even after account deletion.',
     ],
   },
   {
     n: 10,
     title: 'Re-Registration in Future',
     body: [
-      'If you wish to use Saral Pooja again after account deletion, you are welcome to register a new account anytime. Please note that previously deleted booking records, loyalty points, or saved settings cannot be restored to the new account.',
+      'If you wish to use Ritual Mitra again after account deletion, you are welcome to register a new account anytime. Please note that previously deleted booking records, loyalty points, or saved settings cannot be restored to the new account.',
     ],
   },
   {
@@ -118,7 +118,7 @@ export const DELETION_SECTIONS = [
     title: 'Contact Information for Data Inquiries',
     body: [
       'For any questions, clarifications, or expedited deletion requests, please contact our Data Grievance Officer:',
-      '• Company: Saral Pooja',
+      '• Company: Ritual Mitra',
       '• Support Email: saralpooja.info@gmail.com',
       '• Support Phone: +91 70420 64094',
       '• Address: Dabri, Dwarka, New Delhi - 110045, India',
@@ -134,8 +134,8 @@ export const PRIVACY_SECTIONS = [
     n: 1,
     title: 'Introduction & Scope',
     body: [
-      'Welcome to Saral Pooja. At Saral Pooja, we value your privacy and are committed to protecting your personal information. This Privacy Policy explains how we collect, use, store, share, and protect your information when you use our mobile application, website, or any services provided through our platform.',
-      'By creating an account, accessing our platform, booking a religious service, making a payment, or using any feature of Saral Pooja, you agree to the collection and use of your information as described in this Privacy Policy.',
+      'Welcome to Ritual Mitra. At Ritual Mitra, we value your privacy and are committed to protecting your personal information. This Privacy Policy explains how we collect, use, store, share, and protect your information when you use our mobile application, website, or any services provided through our platform.',
+      'By creating an account, accessing our platform, booking a religious service, making a payment, or using any feature of Ritual Mitra, you agree to the collection and use of your information as described in this Privacy Policy.',
     ],
   },
   {
@@ -207,15 +207,15 @@ export const TERMS_SECTIONS = [
     n: 1,
     title: 'Agreement to Terms',
     body: [
-      'These Terms and Conditions constitute a legally binding agreement between you and Saral Pooja governing your access to and use of our mobile application, website, and spiritual services.',
-      'By accessing or using Saral Pooja, you agree to be bound by these Terms and our Privacy and Cancellation policies.',
+      'These Terms and Conditions constitute a legally binding agreement between you and Ritual Mitra governing your access to and use of our mobile application, website, and spiritual services.',
+      'By accessing or using Ritual Mitra, you agree to be bound by these Terms and our Privacy and Cancellation policies.',
     ],
   },
   {
     n: 2,
     title: 'Services Provided',
     body: [
-      'Saral Pooja is a technology platform that connects devotees with verified Vedic pandits, temple priests, and astrologers for religious rituals, offline/online poojas, and devotional samagri products.',
+      'Ritual Mitra is a technology platform that connects devotees with verified Vedic pandits, temple priests, and astrologers for religious rituals, offline/online poojas, and devotional samagri products.',
     ],
   },
   {
@@ -264,7 +264,7 @@ export const REFUND_SECTIONS = [
     n: 3,
     title: 'Pandit Non-Availability or Unforeseen Delays',
     body: [
-      'In the rare event that an assigned pandit is unable to arrive due to medical or unforeseen emergency, Saral Pooja will promptly provide an alternative verified pandit or issue a 100% full refund.',
+      'In the rare event that an assigned pandit is unable to arrive due to medical or unforeseen emergency, Ritual Mitra will promptly provide an alternative verified pandit or issue a 100% full refund.',
     ],
   },
 ];

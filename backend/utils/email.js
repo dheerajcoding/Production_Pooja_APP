@@ -22,7 +22,7 @@ const sendEmail = async ({ to, subject, html }) => {
 
 const passwordResetOtpTemplate = (name, otp) => `
   <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;">
-    <h2 style="color:#f97316;">Saral Pooja - Password Reset</h2>
+    <h2 style="color:#f97316;">Ritual Mitra - Password Reset</h2>
     <p>Hello ${name},</p>
     <p>Use the code below to reset your password. It expires in 10 minutes.</p>
     <div style="text-align:center;margin:28px 0;">
@@ -30,7 +30,7 @@ const passwordResetOtpTemplate = (name, otp) => `
     </div>
     <p>If you did not request this, please ignore this email — your password will remain unchanged.</p>
     <hr style="border:none;border-top:1px solid #eee;margin:24px 0;"/>
-    <p style="color:#999;font-size:12px;">© 2024 Saral Pooja. All rights reserved.</p>
+    <p style="color:#999;font-size:12px;">© 2024 Ritual Mitra. All rights reserved.</p>
   </div>
 `;
 
@@ -47,7 +47,7 @@ const bookingConfirmTemplate = (name, booking) => `
     </table>
     <p>Our team will assign a pandit shortly.</p>
     <hr style="border:none;border-top:1px solid #eee;margin:24px 0;"/>
-    <p style="color:#999;font-size:12px;">© 2024 Saral Pooja. All rights reserved.</p>
+    <p style="color:#999;font-size:12px;">© 2024 Ritual Mitra. All rights reserved.</p>
   </div>
 `;
 

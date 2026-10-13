@@ -76,7 +76,7 @@ export default function OfflineBookings() {
         key:         keyId,
         amount,
         currency,
-        name:        'Saral Pooja',
+        name:        'Ritual Mitra',
         description: `${booking.eventType} — ${panditName}`,
         order_id:    orderId,
         handler: async (response) => {

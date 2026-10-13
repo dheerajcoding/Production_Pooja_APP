@@ -93,7 +93,7 @@ export default function AdminDashboard() {
         <div className="absolute inset-0 opacity-5 text-[100px] leading-none text-right pr-4 pt-1 select-none pointer-events-none">🕉️</div>
         <p className="text-gray-400 text-xs mb-1">{dateStr}</p>
         <h1 className="text-2xl font-bold text-white">Admin Dashboard</h1>
-        <p className="text-gray-400 text-sm mt-0.5">Saral Pooja Platform Overview</p>
+        <p className="text-gray-400 text-sm mt-0.5">Ritual Mitra Platform Overview</p>
         <div className="flex gap-3 mt-4 flex-wrap">
           <Link to="/admin/bookings" className="bg-white/10 hover:bg-white/20 border border-white/20 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
             📋 Manage Bookings

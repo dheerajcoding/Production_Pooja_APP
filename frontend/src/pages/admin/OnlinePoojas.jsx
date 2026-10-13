@@ -262,6 +262,7 @@ export default function AdminOnlinePoojas() {
                       {b.memberNames && <p className="text-xs text-gray-500 mt-1">👨‍👩‍👧 {b.memberNames}</p>}
                       {b.gotraName   && <p className="text-xs text-gray-500">📿 Gotra: {b.gotraName}</p>}
                       {b.wishes      && <p className="text-xs text-gray-400 italic">"{b.wishes}"</p>}
+                      {b.address     && <p className="text-xs text-gray-500">📦 {b.address}</p>}
                     </div>
                     <div className="text-right flex-shrink-0 space-y-1">
                       <div>

@@ -38,7 +38,7 @@ export default function OnlinePoojas() {
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState('All');
   const [bookModal, setBookModal] = useState({ open: false, pooja: null });
-  const [form, setForm] = useState({ preferredDate: '', gotraName: '', memberNames: '', wishes: '' });
+  const [form, setForm] = useState({ preferredDate: '', gotraName: '', memberNames: '', wishes: '', address: '' });
   const [submitting, setSubmitting] = useState(false);
   const [retrying, setRetrying] = useState(null); // bookingId being retried
 
@@ -66,12 +66,16 @@ export default function OnlinePoojas() {
   };
 
   const openBook = (pooja) => {
-    setForm({ preferredDate: '', gotraName: '', memberNames: '', wishes: '' });
+    setForm({ preferredDate: '', gotraName: '', memberNames: '', wishes: '', address: '' });
     setBookModal({ open: true, pooja });
   };
 
   const handleBook = async (e) => {
     e.preventDefault();
+    if (!form.address.trim()) {
+      toast.error('Please enter a delivery address for prasad & certificates.');
+      return;
+    }
     setSubmitting(true);
     try {
       const { pooja } = bookModal;
@@ -88,7 +92,7 @@ export default function OnlinePoojas() {
         key: keyId,
         amount,
         currency,
-        name: 'Saral Pooja',
+        name: 'Ritual Mitra',
         description: pooja.name,
         order_id: orderId,
         handler: async (response) => {
@@ -137,7 +141,7 @@ export default function OnlinePoojas() {
         key: keyId,
         amount,
         currency,
-        name: 'Saral Pooja',
+        name: 'Ritual Mitra',
         description: booking.onlinePoojaId?.name || 'Special Pooja',
         order_id: orderId,
         handler: async (response) => {
@@ -294,6 +298,7 @@ export default function OnlinePoojas() {
                       {b.memberNames && <p className="text-xs text-gray-500 mt-1">👨‍👩‍👧 {b.memberNames}</p>}
                       {b.gotraName   && <p className="text-xs text-gray-500">📿 Gotra: {b.gotraName}</p>}
                       {b.wishes      && <p className="text-xs text-gray-400 italic mt-1">"{b.wishes}"</p>}
+                      {b.address     && <p className="text-xs text-gray-500 mt-1">📦 {b.address}</p>}
                       {b.adminNote   && (
                         <p className="text-xs text-indigo-700 mt-1.5 bg-indigo-50 rounded-lg px-2.5 py-1.5">
                           💬 Pandit's Note: {b.adminNote}
@@ -478,6 +483,17 @@ export default function OnlinePoojas() {
                   placeholder="e.g. Family health and prosperity, new home blessing..."
                   value={form.wishes}
                   onChange={(e) => setForm({ ...form, wishes: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="label">Delivery Address <span className="text-red-500">*</span></label>
+                <textarea
+                  className="input resize-none"
+                  rows={2}
+                  placeholder="Address to send prasad & certificates"
+                  value={form.address}
+                  onChange={(e) => setForm({ ...form, address: e.target.value })}
+                  required
                 />
               </div>
 

@@ -33,7 +33,7 @@ exports.createBooking = async (req, res) => {
   try {
     await sendEmail({
       to: user.email,
-      subject: 'Saral Pooja - Booking Received',
+      subject: 'Ritual Mitra - Booking Received',
       html: bookingConfirmTemplate(user.name, booking),
     });
   } catch (_) {}

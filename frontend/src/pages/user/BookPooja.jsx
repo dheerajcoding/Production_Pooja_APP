@@ -61,7 +61,7 @@ export default function BookPooja() {
         key: keyId,
         amount,
         currency,
-        name: 'Saral Pooja',
+        name: 'Ritual Mitra',
         description: pooja.name,
         order_id: orderId,
         prefill: { name: user?.name, email: user?.email, contact: user?.phone },

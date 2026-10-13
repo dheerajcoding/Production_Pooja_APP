@@ -81,7 +81,7 @@ export default function Cart() {
         key: keyId,
         amount,
         currency,
-        name: 'Saral Pooja Store',
+        name: 'Ritual Mitra Store',
         description: `Order #${shopOrder._id}`,
         order_id: orderId,
         prefill: { name: user?.name, email: user?.email, contact: user?.phone },

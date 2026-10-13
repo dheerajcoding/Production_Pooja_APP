@@ -52,7 +52,7 @@ export default function AccountDeletion() {
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 text-primary-600 font-bold text-xl hover:opacity-90">
             <span className="text-2xl">🪔</span>
-            <span>Saral Pooja</span>
+            <span>Ritual Mitra</span>
           </Link>
           <div className="flex items-center gap-4 text-sm font-medium">
             <Link to="/privacy-policy" className="text-gray-600 hover:text-primary-600">Privacy Policy</Link>
@@ -73,7 +73,7 @@ export default function AccountDeletion() {
             Account & Data Deletion
           </h1>
           <p className="text-gray-600 text-base leading-relaxed">
-            At Saral Pooja, we respect your privacy and give you complete control over your personal data.
+            At Ritual Mitra, we respect your privacy and give you complete control over your personal data.
             You can request the deletion of your account and associated data directly through this page or inside our mobile app.
           </p>
         </div>

@@ -40,7 +40,7 @@ export default function AdminLayout() {
                 <span className="text-lg">🪔</span>
               </div>
               <div>
-                <div className="text-lg font-bold leading-tight" style={{ color: '#F5A623' }}>Saral Pooja</div>
+                <div className="text-lg font-bold leading-tight" style={{ color: '#F5A623' }}>Ritual Mitra</div>
                 <div className="text-xs" style={{ color: '#D4B483' }}>Admin Panel</div>
               </div>
             </div>
@@ -104,7 +104,7 @@ export default function AdminLayout() {
             <span className="text-xl">☰</span>
           </button>
           <span className="text-2xl">🪔</span>
-          <span className="font-bold" style={{ color: '#D9531C' }}>Saral Pooja Admin</span>
+          <span className="font-bold" style={{ color: '#D9531C' }}>Ritual Mitra Admin</span>
         </header>
         <main className="flex-1 p-4 md:p-6 overflow-auto">
           <Outlet />

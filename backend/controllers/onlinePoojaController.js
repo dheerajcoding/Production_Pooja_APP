@@ -62,7 +62,11 @@ exports.getOnlinePoojaById = async (req, res) => {
 // ── User: Book & Pay ──────────────────────────────────────────────────────────
 
 exports.bookOnlinePooja = async (req, res) => {
-  const { preferredDate, gotraName, wishes, memberNames } = req.body;
+  const { preferredDate, gotraName, wishes, memberNames, address } = req.body;
+
+  if (!address || !address.trim()) {
+    return res.status(400).json({ success: false, message: 'Delivery address is required for prasad & certificates.' });
+  }
 
   const pooja = await OnlinePooja.findById(req.params.id);
   if (!pooja || !pooja.isActive) {
@@ -77,6 +81,7 @@ exports.bookOnlinePooja = async (req, res) => {
     gotraName: gotraName || '',
     wishes: wishes || '',
     memberNames: memberNames || '',
+    address: address || '',
   });
 
   res.status(201).json({ success: true, message: 'Booking created. Proceed to payment.', data: booking });

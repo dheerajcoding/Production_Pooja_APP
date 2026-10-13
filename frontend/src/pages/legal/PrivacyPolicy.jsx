@@ -9,7 +9,7 @@ export default function PrivacyPolicy() {
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 text-primary-600 font-bold text-xl hover:opacity-90">
             <span className="text-2xl">🪔</span>
-            <span>Saral Pooja</span>
+            <span>Ritual Mitra</span>
           </Link>
           <div className="flex items-center gap-4 text-sm font-medium">
             <Link to="/delete-account" className="text-gray-600 hover:text-primary-600">Delete Account</Link>

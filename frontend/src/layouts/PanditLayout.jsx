@@ -34,7 +34,7 @@ export default function PanditLayout() {
                 <span className="text-lg">🪔</span>
               </div>
               <div>
-                <div className="text-lg font-bold text-primary-600 leading-tight">Saral Pooja</div>
+                <div className="text-lg font-bold text-primary-600 leading-tight">Ritual Mitra</div>
                 <div className="text-xs font-medium" style={{ color: '#B8860B' }}>Pandit Portal</div>
               </div>
             </div>
@@ -87,7 +87,7 @@ export default function PanditLayout() {
             <span className="text-xl">☰</span>
           </button>
           <span className="text-2xl">🪔</span>
-          <span className="font-bold text-primary-600">Saral Pooja – Pandit</span>
+          <span className="font-bold text-primary-600">Ritual Mitra – Pandit</span>
         </header>
         <main className="flex-1 p-4 md:p-6 overflow-auto">
           <Outlet />
