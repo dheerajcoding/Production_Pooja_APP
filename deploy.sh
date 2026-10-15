@@ -7,7 +7,7 @@ PROJECT_DIR="/var/www/saral-pooja"
 BACKEND_DIR="$PROJECT_DIR/backend"
 FRONTEND_DIR="$PROJECT_DIR/frontend"
 UPLOADS_DIR="$BACKEND_DIR/uploads"
-SERVER_IP="${SERVER_IP:-72.62.192.33}"
+SERVER_IP="${SERVER_IP:-200.141.6.33}"
 
 echo "🚀 Deploying Ritual Mitra"
 echo "📍 $PROJECT_DIR"
