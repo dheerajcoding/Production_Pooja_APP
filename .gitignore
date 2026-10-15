@@ -16,3 +16,6 @@ backend/uploads/
 .DS_Store
 Thumbs.db
 *.log
+
+# Audit output from one-off scripts (contains real document IDs)
+backend/scripts/*.audit.json
