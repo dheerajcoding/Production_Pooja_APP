@@ -4,7 +4,7 @@ const router = express.Router();
 const validate = require('../middleware/validate');
 const { protect } = require('../middleware/auth');
 const {
-  register, login, getMe, forgotPassword, resetPassword, changePassword,
+  register, login, googleLogin, getMe, forgotPassword, resetPassword, changePassword,
 } = require('../controllers/authController');
 
 router.post('/register', [
@@ -17,6 +17,10 @@ router.post('/login', [
   body('email').isEmail().withMessage('Valid email is required').normalizeEmail(),
   body('password').notEmpty().withMessage('Password is required'),
 ], validate, login);
+
+router.post('/google', [
+  body('idToken').notEmpty().withMessage('idToken is required'),
+], validate, googleLogin);
 
 router.get('/me', protect, getMe);
 

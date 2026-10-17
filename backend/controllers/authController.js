@@ -1,8 +1,11 @@
 const crypto = require('crypto');
+const { OAuth2Client } = require('google-auth-library');
 const User = require('../models/User');
 const Pandit = require('../models/Pandit');
 const generateToken = require('../utils/generateToken');
 const { sendEmail, passwordResetOtpTemplate } = require('../utils/email');
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_WEB_CLIENT_ID);
 
 exports.register = async (req, res) => {
   const { name, email, password, phone, role } = req.body;
@@ -46,6 +49,74 @@ exports.login = async (req, res) => {
   const user = await User.findOne({ email }).select('+password');
   if (!user || !(await user.comparePassword(password))) {
     return res.status(401).json({ success: false, message: 'Invalid email or password.' });
+  }
+
+  if (!user.isActive) {
+    return res.status(403).json({ success: false, message: 'Account has been deactivated.' });
+  }
+
+  const token = generateToken({ id: user._id, role: user.role });
+
+  res.json({
+    success: true,
+    message: 'Login successful.',
+    data: {
+      token,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        phone: user.phone,
+        profilePhoto: user.profilePhoto,
+        address: user.address,
+      },
+    },
+  });
+};
+
+exports.googleLogin = async (req, res) => {
+  const { idToken } = req.body;
+  if (!idToken) {
+    return res.status(400).json({ success: false, message: 'idToken is required.' });
+  }
+  if (!process.env.GOOGLE_WEB_CLIENT_ID) {
+    return res.status(500).json({ success: false, message: 'Google sign-in is not configured on the server.' });
+  }
+
+  let payload;
+  try {
+    const ticket = await googleClient.verifyIdToken({
+      idToken,
+      audience: process.env.GOOGLE_WEB_CLIENT_ID,
+    });
+    payload = ticket.getPayload();
+  } catch (err) {
+    return res.status(401).json({ success: false, message: 'Invalid or expired Google token.' });
+  }
+
+  const { sub: googleId, email, name, picture } = payload;
+  if (!email) {
+    return res.status(400).json({ success: false, message: 'This Google account has no email.' });
+  }
+
+  let user = await User.findOne({ googleId });
+  if (!user) {
+    user = await User.findOne({ email: email.toLowerCase() });
+    if (user) {
+      // Existing password account with the same, Google-verified email — link it.
+      user.googleId = googleId;
+      if (!user.profilePhoto && picture) user.profilePhoto = picture;
+      await user.save({ validateBeforeSave: false });
+    } else {
+      user = await User.create({
+        name: name || email.split('@')[0],
+        email: email.toLowerCase(),
+        googleId,
+        role: 'user',
+        profilePhoto: picture || '',
+      });
+    }
   }
 
   if (!user.isActive) {

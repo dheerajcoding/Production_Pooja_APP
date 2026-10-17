@@ -6,7 +6,17 @@ const userSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true, maxlength: 100 },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-    password: { type: String, required: true, minlength: 6, select: false },
+    // Not required for Google-signed-up accounts (no password to compare against).
+    password: {
+      type: String,
+      required: function () { return !this.googleId; },
+      minlength: 6,
+      select: false,
+    },
+    // Google account id ("sub" claim) — set only for accounts created/linked
+    // via Sign in with Google. sparse so plain email/password accounts
+    // (where this is never set) don't collide on the unique index.
+    googleId: { type: String, unique: true, sparse: true, select: false },
     phone: { type: String, trim: true },
     role: { type: String, enum: ['user', 'pandit', 'admin'], default: 'user' },
     profilePhoto: { type: String, default: '' },
