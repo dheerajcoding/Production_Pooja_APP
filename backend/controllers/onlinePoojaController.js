@@ -33,9 +33,10 @@ const deleteOldFile = (folder, filename) => {
 // ── Public ────────────────────────────────────────────────────────────────────
 
 exports.getAllOnlinePoojas = async (req, res) => {
-  const { page = 1, limit = 9, category } = req.query;
+  const { page = 1, limit = 9, category, tier } = req.query;
   const query = { isActive: true };
   if (category) query.category = category;
+  if (tier === 'premium' || tier === 'standard') query.packageTier = tier;
 
   const poojas = await OnlinePooja.find(query)
     .sort({ createdAt: -1 })
@@ -142,7 +143,7 @@ exports.verifyOnlineBookingPayment = async (req, res) => {
 exports.getMyOnlineBookings = async (req, res) => {
   const bookings = await OnlineBooking.find({ userId: req.user._id })
     .populate('onlinePoojaId')
-    .populate({ path: 'panditId', select: 'name photo experience' })
+    .populate({ path: 'panditId', populate: { path: 'userId', select: 'name' }, select: 'userId photo experience' })
     .sort({ createdAt: -1 });
 
   res.json({ success: true, data: bookings });
@@ -153,7 +154,7 @@ exports.getMyOnlineBookings = async (req, res) => {
 exports.createOnlinePooja = async (req, res) => {
   const {
     name, description, category, price, duration, language,
-    panditName, templeLocation, deliveryDays, includedItems,
+    panditName, templeLocation, deliveryDays, includedItems, packageTier,
   } = req.body;
 
   const data = {
@@ -164,6 +165,7 @@ exports.createOnlinePooja = async (req, res) => {
     panditName,
     templeLocation,
     deliveryDays: parseInt(deliveryDays) || 3,
+    packageTier: ['premium', 'standard'].includes(packageTier) ? packageTier : '',
     includedItems: includedItems
       ? (Array.isArray(includedItems) ? includedItems : includedItems.split(',').map((i) => i.trim()).filter(Boolean))
       : [],
@@ -186,6 +188,9 @@ exports.updateOnlinePooja = async (req, res) => {
   fields.forEach((f) => { if (req.body[f] !== undefined) pooja[f] = req.body[f]; });
   if (req.body.price)        pooja.price        = parseFloat(req.body.price);
   if (req.body.deliveryDays) pooja.deliveryDays  = parseInt(req.body.deliveryDays);
+  if (req.body.packageTier !== undefined) {
+    pooja.packageTier = ['premium', 'standard'].includes(req.body.packageTier) ? req.body.packageTier : '';
+  }
   if (req.body.includedItems) {
     pooja.includedItems = Array.isArray(req.body.includedItems)
       ? req.body.includedItems
@@ -221,7 +226,7 @@ exports.getAllOnlineBookingsAdmin = async (req, res) => {
   const bookings = await OnlineBooking.find(query)
     .populate('userId', 'name email phone')
     .populate('onlinePoojaId', 'name category price templeName templeAddress')
-    .populate({ path: 'panditId', select: 'name photo' })
+    .populate({ path: 'panditId', populate: { path: 'userId', select: 'name' }, select: 'userId photo experience' })
     .sort({ createdAt: -1 })
     .limit(parseInt(limit))
     .skip((parseInt(page) - 1) * parseInt(limit));
@@ -313,7 +318,7 @@ exports.assignPanditToBooking = async (req, res) => {
   const populated = await OnlineBooking.findById(booking._id)
     .populate('userId', 'name email phone')
     .populate('onlinePoojaId', 'name category price templeName templeAddress')
-    .populate({ path: 'panditId', select: 'name photo experience' });
+    .populate({ path: 'panditId', populate: { path: 'userId', select: 'name' }, select: 'userId photo experience' });
 
   res.json({ success: true, message: 'Pandit assigned successfully.', data: populated });
 };

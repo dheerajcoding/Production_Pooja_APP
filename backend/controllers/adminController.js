@@ -108,6 +108,13 @@ exports.getAllPandits = async (req, res) => {
   });
 };
 
+exports.getPanditDetails = async (req, res) => {
+  const pandit = await Pandit.findById(req.params.id)
+    .populate('userId', 'name email phone address profilePhoto isActive');
+  if (!pandit) return res.status(404).json({ success: false, message: 'Pandit not found.' });
+  res.json({ success: true, data: pandit });
+};
+
 exports.approvePandit = async (req, res) => {
   const pandit = await Pandit.findById(req.params.id).populate('userId');
   if (!pandit) return res.status(404).json({ success: false, message: 'Pandit not found.' });

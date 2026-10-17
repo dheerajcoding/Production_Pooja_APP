@@ -23,6 +23,7 @@ exports.getAllPandits = async (req, res) => {
   if (available !== undefined) query.isAvailable = available === 'true';
 
   const pandits = await Pandit.find(query)
+    .select('-bankDetails -aadhaarNumber -panNumber')
     .populate('userId', 'name profilePhoto')
     .sort({ rating: -1 })
     .limit(parseInt(limit))
@@ -40,7 +41,9 @@ exports.getAllPandits = async (req, res) => {
 };
 
 exports.getPanditById = async (req, res) => {
-  const pandit = await Pandit.findById(req.params.id).populate('userId', 'name profilePhoto');
+  const pandit = await Pandit.findById(req.params.id)
+    .select('-bankDetails -aadhaarNumber -panNumber')
+    .populate('userId', 'name profilePhoto');
   if (!pandit) return res.status(404).json({ success: false, message: 'Pandit not found.' });
   res.json({ success: true, data: pandit });
 };

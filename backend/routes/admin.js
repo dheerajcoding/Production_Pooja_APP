@@ -4,7 +4,7 @@ const { protect } = require('../middleware/auth');
 const { authorize } = require('../middleware/role');
 const {
   getDashboardStats, getAllUsers, toggleUserStatus,
-  getAllPandits, approvePandit, rejectPandit, updatePandit,
+  getAllPandits, getPanditDetails, approvePandit, rejectPandit, updatePandit,
   getAllBookings, assignPandit, updateBookingStatus,
 } = require('../controllers/adminController');
 
@@ -14,6 +14,7 @@ router.get('/stats', getDashboardStats);
 router.get('/users', getAllUsers);
 router.put('/users/:id/toggle-status', toggleUserStatus);
 router.get('/pandits', getAllPandits);
+router.get('/pandits/:id', getPanditDetails);
 router.put('/pandits/:id/approve', approvePandit);
 router.put('/pandits/:id/reject', rejectPandit);
 router.put('/pandits/:id', updatePandit);

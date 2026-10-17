@@ -19,6 +19,20 @@ export default function AdminPandits() {
   const [feeInput, setFeeInput]   = useState('');
   const [savingFee, setSavingFee] = useState(false);
 
+  // Detail modal (full profile incl. bank/KYC — admin only)
+  const [detailModal, setDetailModal] = useState({ open: false, loading: false, pandit: null, error: '' });
+
+  const openDetail = async (id) => {
+    setDetailModal({ open: true, loading: true, pandit: null, error: '' });
+    try {
+      const { data } = await api.get(`/admin/pandits/${id}`);
+      setDetailModal({ open: true, loading: false, pandit: data.data, error: '' });
+    } catch (err) {
+      setDetailModal({ open: true, loading: false, pandit: null, error: err.response?.data?.message || 'Could not load pandit details.' });
+    }
+  };
+  const closeDetail = () => setDetailModal({ open: false, loading: false, pandit: null, error: '' });
+
   const load = () => {
     setLoading(true);
     const params = new URLSearchParams({ page, limit: 20 });
@@ -93,7 +107,11 @@ export default function AdminPandits() {
             <div key={p._id} className="card">
               <div className="flex items-start justify-between gap-3">
                 {/* Left: photo + info */}
-                <div className="flex items-start gap-3 flex-1 min-w-0">
+                <div
+                  className="flex items-start gap-3 flex-1 min-w-0 cursor-pointer"
+                  onClick={() => openDetail(p._id)}
+                  title="View full profile"
+                >
                   <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center overflow-hidden flex-shrink-0">
                     {p.photo || p.userId?.profilePhoto ? (
                       <img src={p.photo || p.userId?.profilePhoto} alt="" className="w-full h-full object-cover" />
@@ -102,7 +120,7 @@ export default function AdminPandits() {
                     )}
                   </div>
                   <div className="min-w-0">
-                    <h3 className="font-semibold text-gray-900">{p.userId?.name}</h3>
+                    <h3 className="font-semibold text-gray-900 hover:text-primary-600 transition-colors">{p.userId?.name}</h3>
                     <p className="text-sm text-gray-500">{p.userId?.email}</p>
                     {p.userId?.phone && <p className="text-sm text-gray-500">{p.userId?.phone}</p>}
                     <div className="flex flex-wrap gap-1 mt-1.5">
@@ -146,6 +164,12 @@ export default function AdminPandits() {
                     {p.isApproved ? '✓ Approved' : '⏳ Pending'}
                   </span>
                   <div className="flex gap-2 flex-wrap justify-end">
+                    <button
+                      onClick={() => openDetail(p._id)}
+                      className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
+                    >
+                      View Details
+                    </button>
                     {!p.isApproved && (
                       <button onClick={() => approve(p._id)} className="btn-primary text-xs px-3 py-1.5">Approve</button>
                     )}
@@ -238,6 +262,140 @@ export default function AdminPandits() {
           </div>
         </div>
       )}
+
+      {/* ── Pandit Detail Modal (full profile incl. bank/KYC) ── */}
+      {detailModal.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full max-h-[85vh] overflow-y-auto p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Pandit Profile</h3>
+              <button onClick={closeDetail} className="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+            </div>
+
+            {detailModal.loading && (
+              <div className="flex justify-center py-10"><LoadingSpinner size="lg" /></div>
+            )}
+
+            {!detailModal.loading && detailModal.error && (
+              <p className="text-sm text-red-500">{detailModal.error}</p>
+            )}
+
+            {!detailModal.loading && detailModal.pandit && (
+              <PanditDetail pandit={detailModal.pandit} />
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DetailSection({ title, children }) {
+  return (
+    <div className="mb-5">
+      <h4 className="text-xs font-bold uppercase tracking-wide text-primary-600 mb-2">{title}</h4>
+      <div className="space-y-1.5">{children}</div>
+    </div>
+  );
+}
+
+function DetailRow({ label, value }) {
+  return (
+    <div className="flex justify-between gap-3 text-sm">
+      <span className="text-gray-500">{label}</span>
+      <span className="text-gray-900 font-medium text-right">{value || value === 0 ? value : '—'}</span>
+    </div>
+  );
+}
+
+function PanditDetail({ pandit: p }) {
+  const user = p.userId || {};
+  const bank = p.bankDetails || {};
+  const addr = p.currentAddress || {};
+  const userAddr = user.address || {};
+  const joinDate = p.createdAt ? new Date(p.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : null;
+  const declaredOn = p.declarationAcceptedAt ? new Date(p.declarationAcceptedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : null;
+
+  return (
+    <div>
+      <div className="flex items-center gap-3 mb-5">
+        <div className="w-14 h-14 rounded-full bg-amber-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+          {p.photo || user.profilePhoto ? (
+            <img src={p.photo || user.profilePhoto} alt="" className="w-full h-full object-cover" />
+          ) : (
+            <span className="text-2xl font-bold text-amber-600">{user.name?.charAt(0)}</span>
+          )}
+        </div>
+        <div>
+          <p className="font-semibold text-gray-900">{user.name}</p>
+          <p className="text-sm text-gray-500">{user.email}</p>
+          <span className={`badge mt-1 inline-block ${p.isApproved ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+            {p.isApproved ? '✓ Approved' : '⏳ Pending'}
+          </span>
+        </div>
+      </div>
+
+      {!p.isApproved && p.rejectionReason && (
+        <DetailSection title="Rejection Reason">
+          <p className="text-sm text-gray-700">{p.rejectionReason}</p>
+        </DetailSection>
+      )}
+
+      <DetailSection title="Profile Info">
+        <DetailRow label="Phone" value={user.phone} />
+        <DetailRow
+          label="Registered Address"
+          value={[userAddr.street, userAddr.city, userAddr.state, userAddr.pincode].filter(Boolean).join(', ')}
+        />
+        <DetailRow label="Account Status" value={user.isActive === false ? 'Deactivated' : 'Active'} />
+      </DetailSection>
+
+      <DetailSection title="Professional Details">
+        <DetailRow label="Bio" value={p.bio} />
+        <DetailRow label="Education" value={p.education} />
+        <DetailRow label="Experience" value={p.experience != null ? `${p.experience} years` : null} />
+        <DetailRow label="Languages" value={p.languages?.join(', ')} />
+        <DetailRow label="Expertise" value={p.expertise?.join(', ')} />
+        <DetailRow label="Service Area" value={p.operationalCity} />
+        <DetailRow label="Location" value={p.location} />
+      </DetailSection>
+
+      <DetailSection title="Identity Verification (KYC)">
+        <DetailRow label="Aadhaar Number" value={p.aadhaarNumber} />
+        <DetailRow label="PAN Number" value={p.panNumber} />
+        <DetailRow
+          label="Current Address"
+          value={[addr.street, addr.city, addr.state, addr.pincode].filter(Boolean).join(', ')}
+        />
+      </DetailSection>
+
+      <DetailSection title="Pricing & Commercials">
+        <DetailRow label="Basic Dakshina (Base Rate)" value={p.basicDakshinaRate != null ? `₹${p.basicDakshinaRate}` : null} />
+        <DetailRow label="Consultation Fee (₹/visit)" value={p.consultationFee != null ? `₹${p.consultationFee}` : null} />
+        {p.isAstrologer && (
+          <DetailRow label="Astrology Rate (₹/min)" value={p.astroRate != null ? `₹${p.astroRate}` : null} />
+        )}
+      </DetailSection>
+
+      <DetailSection title="Bank Details (For Settlements)">
+        <DetailRow label="Account Holder Name" value={bank.accountHolderName} />
+        <DetailRow label="Account Number" value={bank.accountNumber} />
+        <DetailRow label="IFSC Code" value={bank.ifscCode} />
+        <DetailRow label="UPI ID" value={bank.upiId} />
+      </DetailSection>
+
+      <DetailSection title="Declaration">
+        <DetailRow label="Status" value={p.declarationAccepted ? 'Accepted' : 'Not accepted'} />
+        {declaredOn && <DetailRow label="Accepted On" value={declaredOn} />}
+      </DetailSection>
+
+      <DetailSection title="Activity">
+        <DetailRow label="Total Bookings" value={p.totalBookings} />
+        <DetailRow label="Completed Bookings" value={p.completedBookings} />
+        <DetailRow label="Total Earnings" value={p.earnings != null ? `₹${p.earnings}` : null} />
+        <DetailRow label="Rating" value={p.rating != null ? `${p.rating.toFixed(1)} (${p.totalRatings || 0} ratings)` : null} />
+        <DetailRow label="Joined" value={joinDate} />
+      </DetailSection>
     </div>
   );
 }

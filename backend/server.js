@@ -28,6 +28,7 @@ const walletRoutes         = require('./routes/wallet');
 const festivalRoutes       = require('./routes/festival');
 const poojaCategoryRoutes  = require('./routes/poojaCategory');
 const { seedDefaults: seedPoojaCategories } = require('./controllers/poojaCategoryController');
+const { cleanupOldOnlineBookingMedia } = require('./jobs/cleanupOldMedia');
 
 const app = express();
 
@@ -101,4 +102,11 @@ app.listen(PORT, async () => {
   } catch (err) {
     console.warn('PoojaCategory seed skipped:', err.message);
   }
+
+  // Delete completion video/photos older than 15 days (see jobs/cleanupOldMedia.js).
+  // Runs once at boot, then every 24h.
+  cleanupOldOnlineBookingMedia().catch((err) => console.warn('Media cleanup skipped:', err.message));
+  setInterval(() => {
+    cleanupOldOnlineBookingMedia().catch((err) => console.warn('Media cleanup failed:', err.message));
+  }, 24 * 60 * 60 * 1000);
 });

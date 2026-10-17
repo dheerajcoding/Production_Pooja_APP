@@ -20,6 +20,13 @@ const specialPoojaSchema = new mongoose.Schema(
     deliveryDays: { type: Number, default: 3 },          // typical days to complete after booking
     includedItems:[{ type: String }],                    // what is included (prasad, dakshina, etc.)
     isActive:     { type: Boolean, default: true },
+    // Package tier — 'premium', 'standard', or '' (regular / uncategorized).
+    // Premium and Standard show as their own tabs on the Temple Poojas list.
+    packageTier: {
+      type: String,
+      enum: ['', 'premium', 'standard'],
+      default: '',
+    },
   },
   { timestamps: true }
 );
