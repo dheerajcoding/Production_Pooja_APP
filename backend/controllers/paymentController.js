@@ -55,7 +55,7 @@ exports.createOrder = async (req, res) => {
 };
 
 exports.verifyPayment = async (req, res) => {
-  const { razorpayOrderId, razorpayPaymentId, razorpaySignature, bookingId } = req.body;
+  const { razorpayOrderId, razorpayPaymentId, razorpaySignature } = req.body;
 
   const body = `${razorpayOrderId}|${razorpayPaymentId}`;
   const expectedSignature = crypto
@@ -67,15 +67,23 @@ exports.verifyPayment = async (req, res) => {
     return res.status(400).json({ success: false, message: 'Payment verification failed. Invalid signature.' });
   }
 
-  const payment = await Payment.findOne({ razorpayOrderId });
+  // The order→booking binding is whatever createOrder recorded — never a
+  // client-supplied bookingId, so a signature can't be replayed onto a
+  // different (more expensive) booking.
+  const payment = await Payment.findOne({ razorpayOrderId, userId: req.user._id });
   if (!payment) return res.status(404).json({ success: false, message: 'Payment record not found.' });
+
+  if (payment.status === 'captured') {
+    const existingBooking = await Booking.findById(payment.bookingId);
+    return res.json({ success: true, message: 'Payment already verified.', data: { payment, booking: existingBooking } });
+  }
 
   payment.razorpayPaymentId = razorpayPaymentId;
   payment.razorpaySignature = razorpaySignature;
   payment.status = 'captured';
   await payment.save();
 
-  const booking = await Booking.findById(bookingId);
+  const booking = await Booking.findOne({ _id: payment.bookingId, userId: req.user._id });
   if (booking) {
     booking.isPaid = true;
     booking.paymentId = payment._id;

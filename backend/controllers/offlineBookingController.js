@@ -135,6 +135,13 @@ exports.verifyPayment = async (req, res) => {
     return res.status(403).json({ success: false, message: 'Not authorized.' });
   }
 
+  if (booking.isPaid) {
+    return res.json({ success: true, message: 'Already paid.', data: booking });
+  }
+  if (booking.razorpayOrderId !== razorpayOrderId) {
+    return res.status(400).json({ success: false, message: 'This payment does not match this booking.' });
+  }
+
   const expectedSig = crypto
     .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
     .update(`${razorpayOrderId}|${razorpayPaymentId}`)

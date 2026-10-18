@@ -86,13 +86,9 @@ exports.createTopupOrder = async (req, res) => {
 ───────────────────────────────────────────── */
 exports.verifyTopupPayment = async (req, res) => {
   const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
-  const baseInput = Number(req.body.amount);   // base top-up (credited to wallet)
 
   if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
     return res.status(400).json({ success: false, message: 'Missing payment details.' });
-  }
-  if (!Number.isFinite(baseInput) || baseInput < MIN_TOPUP) {
-    return res.status(400).json({ success: false, message: 'Invalid top-up amount.' });
   }
 
   const expected = crypto
@@ -104,17 +100,29 @@ exports.verifyTopupPayment = async (req, res) => {
     return res.status(400).json({ success: false, message: 'Payment verification failed.' });
   }
 
-  const { base, gst, total } = computeTotals(baseInput);
-
   // Prevent double-credit on retry
   const existing = await WalletTransaction.findOne({ razorpayPaymentId: razorpay_payment_id });
   if (existing) {
     const user = await User.findById(req.user._id).select('walletBalance');
     return res.json({
       success: true,
-      data: { balance: user.walletBalance, transaction: existing, base, gst, total },
+      data: { balance: user.walletBalance, transaction: existing },
       message: 'Top-up already credited.',
     });
+  }
+
+  // Never trust a client-supplied amount — fetch the order Razorpay actually
+  // holds (set once, server-side, in createTopupOrder's `notes`) and credit
+  // exactly that, after confirming this order was this user's wallet top-up.
+  const order = await getRazorpay().orders.fetch(razorpay_order_id);
+  if (!order || order.notes?.purpose !== 'wallet_topup' || order.notes?.userId !== String(req.user._id)) {
+    return res.status(400).json({ success: false, message: 'This order does not match your account.' });
+  }
+  const base  = Number(order.notes.baseAmt);
+  const gst   = Number(order.notes.gstAmt);
+  const total = Number(order.notes.totalAmt);
+  if (!Number.isFinite(base) || base < MIN_TOPUP) {
+    return res.status(400).json({ success: false, message: 'Invalid top-up order.' });
   }
 
   const user = await User.findById(req.user._id);

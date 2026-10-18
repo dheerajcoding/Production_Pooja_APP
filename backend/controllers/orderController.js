@@ -95,8 +95,14 @@ exports.verifyOrderPayment = async (req, res) => {
     return res.status(400).json({ success: false, message: 'Payment verification failed.' });
   }
 
-  const order = await Order.findById(shopOrderId);
+  const order = await Order.findOne({ _id: shopOrderId, userId: req.user._id });
   if (!order) return res.status(404).json({ success: false, message: 'Order not found.' });
+  if (order.razorpayOrderId !== razorpayOrderId) {
+    return res.status(400).json({ success: false, message: 'This payment does not match this order.' });
+  }
+  if (order.isPaid) {
+    return res.json({ success: true, message: 'Order already paid.', data: order });
+  }
 
   order.isPaid = true;
   order.status = 'paid';

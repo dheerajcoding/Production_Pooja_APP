@@ -54,6 +54,29 @@ exports.getAllOnlinePoojas = async (req, res) => {
   });
 };
 
+// Admin management listing — includes inactive online poojas (so a
+// deactivated one can still be found and reactivated) and a real limit.
+exports.getAllOnlinePoojasAdmin = async (req, res) => {
+  const { page = 1, limit = 100, category } = req.query;
+  const query = {};
+  if (category) query.category = category;
+
+  const poojas = await OnlinePooja.find(query)
+    .sort({ createdAt: -1 })
+    .limit(parseInt(limit))
+    .skip((parseInt(page) - 1) * parseInt(limit));
+
+  const total = await OnlinePooja.countDocuments(query);
+
+  res.json({
+    success: true,
+    data: {
+      poojas,
+      pagination: { page: parseInt(page), limit: parseInt(limit), total, pages: Math.ceil(total / limit) },
+    },
+  });
+};
+
 exports.getOnlinePoojaById = async (req, res) => {
   const pooja = await OnlinePooja.findById(req.params.id);
   if (!pooja) return res.status(404).json({ success: false, message: 'Special pooja not found.' });
@@ -128,8 +151,14 @@ exports.verifyOnlineBookingPayment = async (req, res) => {
     return res.status(400).json({ success: false, message: 'Payment verification failed.' });
   }
 
-  const booking = await OnlineBooking.findById(bookingId);
+  const booking = await OnlineBooking.findOne({ _id: bookingId, userId: req.user._id });
   if (!booking) return res.status(404).json({ success: false, message: 'Booking not found.' });
+  if (booking.razorpayOrderId !== razorpayOrderId) {
+    return res.status(400).json({ success: false, message: 'This payment does not match this booking.' });
+  }
+  if (booking.isPaid) {
+    return res.json({ success: true, message: 'Already paid.', data: booking });
+  }
 
   booking.isPaid = true;
   booking.status = 'confirmed';
@@ -225,7 +254,7 @@ exports.getAllOnlineBookingsAdmin = async (req, res) => {
 
   const bookings = await OnlineBooking.find(query)
     .populate('userId', 'name email phone')
-    .populate('onlinePoojaId', 'name category price templeName templeAddress')
+    .populate('onlinePoojaId', 'name category price templeLocation')
     .populate({ path: 'panditId', populate: { path: 'userId', select: 'name' }, select: 'userId photo experience' })
     .sort({ createdAt: -1 })
     .limit(parseInt(limit))
@@ -317,7 +346,7 @@ exports.assignPanditToBooking = async (req, res) => {
 
   const populated = await OnlineBooking.findById(booking._id)
     .populate('userId', 'name email phone')
-    .populate('onlinePoojaId', 'name category price templeName templeAddress')
+    .populate('onlinePoojaId', 'name category price templeLocation')
     .populate({ path: 'panditId', populate: { path: 'userId', select: 'name' }, select: 'userId photo experience' });
 
   res.json({ success: true, message: 'Pandit assigned successfully.', data: populated });
@@ -386,7 +415,7 @@ exports.getPanditAssignedBookings = async (req, res) => {
 
   const bookings = await OnlineBooking.find(query)
     .populate('userId', 'name email phone')
-    .populate('onlinePoojaId', 'name category price templeName templeAddress duration')
+    .populate('onlinePoojaId', 'name category price templeLocation duration')
     .sort({ assignedAt: -1, createdAt: -1 });
 
   res.json({ success: true, data: bookings });

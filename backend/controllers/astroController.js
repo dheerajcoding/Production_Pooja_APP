@@ -6,12 +6,20 @@ const WalletTransaction  = require('../models/WalletTransaction');
 const BLOCK_MINUTES = 10; // legacy schema field — no longer drives billing
 const FREE_TRIAL_MINUTES = 10; // one-time free minutes for a user's first-ever astro session
 
-// Only accounts created on/after this launch date are eligible — existing
-// users who simply haven't tried astrology yet do NOT get it retroactively.
-const FREE_TRIAL_LAUNCH_DATE = new Date('2026-10-18T00:00:00.000Z');
-
-function isEligibleForFreeAstroTrial(user) {
-  return !!user && !user.hasUsedFreeAstroTrial && !!user.createdAt && user.createdAt >= FREE_TRIAL_LAUNCH_DATE;
+/* ─────────────────────────────────────────────
+   HELPER — is this requester actually a party to
+   this session (the devotee, the assigned pandit,
+   or an admin)? Used to stop one user from reading/
+   posting into/ending another user's private chat.
+───────────────────────────────────────────── */
+async function isSessionParticipant(session, req) {
+  if (req.user.role === 'admin') return true;
+  if (session.userId.toString() === req.user._id.toString()) return true;
+  if (req.user.role === 'pandit') {
+    const pandit = await Pandit.findOne({ userId: req.user._id }).select('_id');
+    if (pandit && session.panditId.toString() === pandit._id.toString()) return true;
+  }
+  return false;
 }
 
 /* ─────────────────────────────────────────────
@@ -236,6 +244,9 @@ exports.getSessionById = async (req, res) => {
     .populate('userId', 'name');
 
   if (!session) return res.status(404).json({ success: false, message: 'Session not found.' });
+  if (!(await isSessionParticipant(session, req))) {
+    return res.status(403).json({ success: false, message: 'Access denied.' });
+  }
 
   res.json({ success: true, data: session });
 };
@@ -262,12 +273,11 @@ exports.startChatFromWallet = async (req, res) => {
   const balance = user.walletBalance || 0;
   const rate    = Number(session.ratePerMinute || 0);
 
-  // Grant the one-time free trial on this session's first-ever activation,
-  // only for accounts created on/after FREE_TRIAL_LAUNCH_DATE. Guarded by
-  // both session.freeMinutesGranted (never granted on THIS session before)
-  // and the user-level flag (never granted on ANY session before) so
-  // resuming an expired session never re-grants.
-  if (isEligibleForFreeAstroTrial(user) && !(session.freeMinutesGranted > 0)) {
+  // Grant the one-time free trial on this session's first-ever activation.
+  // Guarded by both session.freeMinutesGranted (never granted on THIS
+  // session before) and the user-level flag (never granted on ANY session
+  // before) so resuming an expired session never re-grants.
+  if (!user.hasUsedFreeAstroTrial && !(session.freeMinutesGranted > 0)) {
     session.freeMinutesGranted   = FREE_TRIAL_MINUTES;
     session.freeMinutesRemaining = FREE_TRIAL_MINUTES;
     user.hasUsedFreeAstroTrial   = true;
@@ -343,6 +353,9 @@ exports.sendMessage = async (req, res) => {
 
   const session = await AstroSession.findById(req.params.id);
   if (!session)                    return res.status(404).json({ success: false, message: 'Session not found.' });
+  if (!(await isSessionParticipant(session, req))) {
+    return res.status(403).json({ success: false, message: 'Access denied.' });
+  }
   if (session.status !== 'active') return res.status(400).json({ success: false, message: 'Chat is not active. Please start the chat from your wallet.' });
 
   await chargeAccruedUsage(session);
@@ -367,6 +380,9 @@ exports.sendImageMessage = async (req, res) => {
 
   const session = await AstroSession.findById(req.params.id);
   if (!session)                    return res.status(404).json({ success: false, message: 'Session not found.' });
+  if (!(await isSessionParticipant(session, req))) {
+    return res.status(403).json({ success: false, message: 'Access denied.' });
+  }
   if (session.status !== 'active') return res.status(400).json({ success: false, message: 'Chat is not active. Please start the chat from your wallet.' });
 
   await chargeAccruedUsage(session);
@@ -397,8 +413,11 @@ exports.sendImageMessage = async (req, res) => {
 ───────────────────────────────────────────── */
 exports.getMessages = async (req, res) => {
   const session = await AstroSession.findById(req.params.id)
-    .select('messages status startTime paidUntil lastChargedAt ratePerMinute totalPaidMinutes totalPaidAmount blockMinutes userId freeMinutesGranted freeMinutesRemaining');
+    .select('messages status startTime paidUntil lastChargedAt ratePerMinute totalPaidMinutes totalPaidAmount blockMinutes userId panditId freeMinutesGranted freeMinutesRemaining');
   if (!session) return res.status(404).json({ success: false, message: 'Session not found.' });
+  if (!(await isSessionParticipant(session, req))) {
+    return res.status(403).json({ success: false, message: 'Access denied.' });
+  }
 
   const wasActive = session.status === 'active';
   let walletBalance = null;
@@ -439,6 +458,9 @@ exports.getMessages = async (req, res) => {
 exports.endSession = async (req, res) => {
   const session = await AstroSession.findById(req.params.id);
   if (!session) return res.status(404).json({ success: false, message: 'Session not found.' });
+  if (!(await isSessionParticipant(session, req))) {
+    return res.status(403).json({ success: false, message: 'Access denied.' });
+  }
 
   if (!['waiting', 'accepted', 'active', 'expired'].includes(session.status)) {
     return res.status(400).json({ success: false, message: 'Session is already ended.' });
@@ -641,11 +663,6 @@ exports.adminGetAllSessions = async (req, res) => {
 
   res.json({ success: true, data: { sessions, pagination: { total, page: Number(page), pages: Math.ceil(total / limit) } } });
 };
-
-// Reused by authController.js so register/login/google-login can tell the
-// client whether this user currently qualifies for the free astro trial,
-// without duplicating the launch-date cutoff logic in two places.
-exports.isEligibleForFreeAstroTrial = isEligibleForFreeAstroTrial;
 
 /* ─────────────────────────────────────────────
    ADMIN — force end a session
