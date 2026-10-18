@@ -5,6 +5,7 @@ const { authorize } = require('../middleware/role');
 const { uploadPoojaImage, uploadPoojaVideo, uploadCompletionImages } = require('../config/upload');
 const {
   getAllOnlinePoojas,
+  getAllOnlinePoojasAdmin,
   getOnlinePoojaById,
   bookOnlinePooja,
   createOnlineBookingPayment,
@@ -27,6 +28,7 @@ const {
 
 // ── Public ────────────────────────────────────────────────────────────────────
 router.get('/', getAllOnlinePoojas);
+router.get('/admin/all', protect, authorize('admin'), getAllOnlinePoojasAdmin);
 router.get('/:id', getOnlinePoojaById);
 
 // ── User ──────────────────────────────────────────────────────────────────────

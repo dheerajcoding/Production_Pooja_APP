@@ -46,6 +46,33 @@ exports.getAllProducts = async (req, res) => {
   });
 };
 
+// Admin management listing — includes inactive products (so a deactivated
+// product can still be found and reactivated) and supports a real limit.
+exports.getAllProductsAdmin = async (req, res) => {
+  const { category, page = 1, limit = 100, search } = req.query;
+  const query = {};
+  if (category) query.category = category;
+  if (search) query.$or = [
+    { name: { $regex: search, $options: 'i' } },
+    { tags: { $in: [new RegExp(search, 'i')] } },
+  ];
+
+  const products = await Product.find(query)
+    .sort({ createdAt: -1 })
+    .limit(parseInt(limit))
+    .skip((parseInt(page) - 1) * parseInt(limit));
+
+  const total = await Product.countDocuments(query);
+
+  res.json({
+    success: true,
+    data: {
+      products,
+      pagination: { page: parseInt(page), limit: parseInt(limit), total, pages: Math.ceil(total / limit) },
+    },
+  });
+};
+
 exports.getProductById = async (req, res) => {
   const product = await Product.findById(req.params.id);
   if (!product) return res.status(404).json({ success: false, message: 'Product not found.' });

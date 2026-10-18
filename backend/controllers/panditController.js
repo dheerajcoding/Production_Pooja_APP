@@ -197,6 +197,7 @@ exports.getMyBookings = async (req, res) => {
 
 exports.acceptBooking = async (req, res) => {
   const pandit = await Pandit.findOne({ userId: req.user._id });
+  if (!pandit) return res.status(404).json({ success: false, message: 'Pandit profile not found.' });
   const booking = await Booking.findOne({ _id: req.params.id, panditId: pandit._id, status: 'assigned' });
   if (!booking) return res.status(404).json({ success: false, message: 'Booking not found or not assigned to you.' });
 
@@ -207,6 +208,7 @@ exports.acceptBooking = async (req, res) => {
 
 exports.rejectBooking = async (req, res) => {
   const pandit = await Pandit.findOne({ userId: req.user._id });
+  if (!pandit) return res.status(404).json({ success: false, message: 'Pandit profile not found.' });
   const booking = await Booking.findOne({ _id: req.params.id, panditId: pandit._id, status: 'assigned' });
   if (!booking) return res.status(404).json({ success: false, message: 'Booking not found.' });
 
@@ -219,6 +221,7 @@ exports.rejectBooking = async (req, res) => {
 
 exports.completeBooking = async (req, res) => {
   const pandit = await Pandit.findOne({ userId: req.user._id });
+  if (!pandit) return res.status(404).json({ success: false, message: 'Pandit profile not found.' });
   const booking = await Booking.findOne({ _id: req.params.id, panditId: pandit._id, status: 'confirmed' });
   if (!booking) return res.status(404).json({ success: false, message: 'Booking not found.' });
 
@@ -245,6 +248,12 @@ exports.getEarningsSummary = async (req, res) => {
     { $group: { _id: null, total: { $sum: { $multiply: ['$amount', 0.8] } }, count: { $sum: 1 } } },
   ]);
 
+  const recentBookings = await Booking.find({ panditId: pandit._id, status: 'completed' })
+    .sort({ completedAt: -1 })
+    .limit(10)
+    .populate('poojaId', 'name')
+    .populate('userId', 'name');
+
   res.json({
     success: true,
     data: {
@@ -253,6 +262,7 @@ exports.getEarningsSummary = async (req, res) => {
       completedBookings: pandit.completedBookings,
       monthlyEarnings: monthlyEarnings[0]?.total || 0,
       monthlyBookings: monthlyEarnings[0]?.count || 0,
+      recentBookings,
     },
   });
 };

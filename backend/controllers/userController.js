@@ -120,6 +120,21 @@ exports.deleteMyAccount = async (req, res) => {
     console.warn('Cart cleanup warning:', err.message);
   }
 
+  // 2b. If this is a pandit account, take their profile off the public
+  // listings/astrology board — otherwise it keeps showing up with a
+  // dangling, now-deleted userId.
+  if (user.role === 'pandit') {
+    try {
+      const Pandit = require('../models/Pandit');
+      await Pandit.findOneAndUpdate(
+        { userId },
+        { isApproved: false, isAvailable: false, isLiveNow: false }
+      );
+    } catch (err) {
+      console.warn('Pandit deactivation warning:', err.message);
+    }
+  }
+
   // 3. Log deletion request as completed
   try {
     const DeletionRequest = require('../models/DeletionRequest');

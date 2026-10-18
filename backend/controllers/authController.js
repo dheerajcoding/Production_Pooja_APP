@@ -4,7 +4,6 @@ const User = require('../models/User');
 const Pandit = require('../models/Pandit');
 const generateToken = require('../utils/generateToken');
 const { sendEmail, passwordResetOtpTemplate } = require('../utils/email');
-const { isEligibleForFreeAstroTrial } = require('./astroController');
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_WEB_CLIENT_ID);
 
@@ -39,7 +38,7 @@ exports.register = async (req, res) => {
         role: user.role,
         phone: user.phone,
         profilePhoto: user.profilePhoto,
-        freeAstroTrialEligible: isEligibleForFreeAstroTrial(user),
+        hasUsedFreeAstroTrial: user.hasUsedFreeAstroTrial,
       },
     },
   });
@@ -72,7 +71,7 @@ exports.login = async (req, res) => {
         phone: user.phone,
         profilePhoto: user.profilePhoto,
         address: user.address,
-        freeAstroTrialEligible: isEligibleForFreeAstroTrial(user),
+        hasUsedFreeAstroTrial: user.hasUsedFreeAstroTrial,
       },
     },
   });
@@ -141,7 +140,7 @@ exports.googleLogin = async (req, res) => {
         phone: user.phone,
         profilePhoto: user.profilePhoto,
         address: user.address,
-        freeAstroTrialEligible: isEligibleForFreeAstroTrial(user),
+        hasUsedFreeAstroTrial: user.hasUsedFreeAstroTrial,
       },
     },
   });

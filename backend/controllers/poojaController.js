@@ -38,6 +38,30 @@ exports.getAllPoojas = async (req, res) => {
   });
 };
 
+// Admin management listing — includes inactive poojas (so a deactivated
+// pooja can still be found and reactivated) and supports a real limit.
+exports.getAllPoojasAdmin = async (req, res) => {
+  const { category, page = 1, limit = 100, search } = req.query;
+  const query = {};
+  if (category) query.category = category;
+  if (search) query.name = { $regex: search, $options: 'i' };
+
+  const poojas = await Pooja.find(query)
+    .sort({ createdAt: -1 })
+    .limit(parseInt(limit))
+    .skip((parseInt(page) - 1) * parseInt(limit));
+
+  const total = await Pooja.countDocuments(query);
+
+  res.json({
+    success: true,
+    data: {
+      poojas,
+      pagination: { page: parseInt(page), limit: parseInt(limit), total, pages: Math.ceil(total / limit) },
+    },
+  });
+};
+
 exports.getPoojaById = async (req, res) => {
   const pooja = await Pooja.findById(req.params.id);
   if (!pooja) return res.status(404).json({ success: false, message: 'Pooja not found.' });
