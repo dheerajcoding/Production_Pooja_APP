@@ -6,6 +6,14 @@ const WalletTransaction  = require('../models/WalletTransaction');
 const BLOCK_MINUTES = 10; // legacy schema field — no longer drives billing
 const FREE_TRIAL_MINUTES = 10; // one-time free minutes for a user's first-ever astro session
 
+// Only accounts created on/after this launch date are eligible — existing
+// users who simply haven't tried astrology yet do NOT get it retroactively.
+const FREE_TRIAL_LAUNCH_DATE = new Date('2026-10-18T00:00:00.000Z');
+
+function isEligibleForFreeAstroTrial(user) {
+  return !!user && !user.hasUsedFreeAstroTrial && !!user.createdAt && user.createdAt >= FREE_TRIAL_LAUNCH_DATE;
+}
+
 /* ─────────────────────────────────────────────
    HELPER — charge accrued whole minutes since the
    session's lastChargedAt (or startTime for first
@@ -254,11 +262,12 @@ exports.startChatFromWallet = async (req, res) => {
   const balance = user.walletBalance || 0;
   const rate    = Number(session.ratePerMinute || 0);
 
-  // Grant the one-time free trial on this session's first-ever activation.
-  // Guarded by both session.freeMinutesGranted (never granted on THIS
-  // session before) and the user-level flag (never granted on ANY session
-  // before) so resuming an expired session never re-grants.
-  if (!user.hasUsedFreeAstroTrial && !(session.freeMinutesGranted > 0)) {
+  // Grant the one-time free trial on this session's first-ever activation,
+  // only for accounts created on/after FREE_TRIAL_LAUNCH_DATE. Guarded by
+  // both session.freeMinutesGranted (never granted on THIS session before)
+  // and the user-level flag (never granted on ANY session before) so
+  // resuming an expired session never re-grants.
+  if (isEligibleForFreeAstroTrial(user) && !(session.freeMinutesGranted > 0)) {
     session.freeMinutesGranted   = FREE_TRIAL_MINUTES;
     session.freeMinutesRemaining = FREE_TRIAL_MINUTES;
     user.hasUsedFreeAstroTrial   = true;
@@ -632,6 +641,11 @@ exports.adminGetAllSessions = async (req, res) => {
 
   res.json({ success: true, data: { sessions, pagination: { total, page: Number(page), pages: Math.ceil(total / limit) } } });
 };
+
+// Reused by authController.js so register/login/google-login can tell the
+// client whether this user currently qualifies for the free astro trial,
+// without duplicating the launch-date cutoff logic in two places.
+exports.isEligibleForFreeAstroTrial = isEligibleForFreeAstroTrial;
 
 /* ─────────────────────────────────────────────
    ADMIN — force end a session
