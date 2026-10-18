@@ -4,6 +4,7 @@ const User               = require('../models/User');
 const WalletTransaction  = require('../models/WalletTransaction');
 
 const BLOCK_MINUTES = 10; // legacy schema field — no longer drives billing
+const FREE_TRIAL_MINUTES = 10; // one-time free minutes for a user's first-ever astro session
 
 /* ─────────────────────────────────────────────
    HELPER — charge accrued whole minutes since the
@@ -33,38 +34,52 @@ async function chargeAccruedUsage(session) {
   let charged = 0;
   let expired = false;
 
-  if (wholeMin > 0 && rate > 0) {
-    const affordable = Math.min(wholeMin, Math.floor((user.walletBalance || 0) / rate));
-    const cost       = affordable * rate;
-    if (cost > 0) {
-      user.walletBalance = (user.walletBalance || 0) - cost;
-      await user.save();
-      session.totalPaidMinutes = (session.totalPaidMinutes || 0) + affordable;
-      session.totalPaidAmount  = (session.totalPaidAmount  || 0) + cost;
-      session.lastChargedAt    = new Date(anchor.getTime() + affordable * 60000);
-      charged = affordable;
-
-      await WalletTransaction.create({
-        userId:        user._id,
-        type:          'debit',
-        amount:        cost,
-        balanceAfter:  user.walletBalance,
-        referenceType: 'astro_session',
-        referenceId:   session._id,
-        description:   `Astrology chat — ${affordable} min @ ₹${rate}/min`,
-      });
+  if (wholeMin > 0) {
+    // Free trial minutes are consumed first, before anything touches the wallet.
+    const freeAvailable = session.freeMinutesRemaining || 0;
+    const freeUsed       = Math.min(wholeMin, freeAvailable);
+    let chargeAnchor      = anchor;
+    if (freeUsed > 0) {
+      session.freeMinutesRemaining = freeAvailable - freeUsed;
+      chargeAnchor = new Date(anchor.getTime() + freeUsed * 60000);
+      session.lastChargedAt = chargeAnchor;
+      charged += freeUsed;
     }
-    if (affordable < wholeMin) {
-      // Wallet ran out mid-usage → mark expired
-      session.status  = 'expired';
-      session.endTime = now;
-      expired = true;
+
+    const remainingMin = wholeMin - freeUsed;
+    if (remainingMin > 0 && rate > 0) {
+      const affordable = Math.min(remainingMin, Math.floor((user.walletBalance || 0) / rate));
+      const cost        = affordable * rate;
+      if (cost > 0) {
+        user.walletBalance = (user.walletBalance || 0) - cost;
+        await user.save();
+        session.totalPaidMinutes = (session.totalPaidMinutes || 0) + affordable;
+        session.totalPaidAmount  = (session.totalPaidAmount  || 0) + cost;
+        session.lastChargedAt    = new Date(chargeAnchor.getTime() + affordable * 60000);
+        charged += affordable;
+
+        await WalletTransaction.create({
+          userId:        user._id,
+          type:          'debit',
+          amount:        cost,
+          balanceAfter:  user.walletBalance,
+          referenceType: 'astro_session',
+          referenceId:   session._id,
+          description:   `Astrology chat — ${affordable} min @ ₹${rate}/min`,
+        });
+      }
+      if (affordable < remainingMin) {
+        // Wallet ran out mid-usage (after any free minutes) → mark expired
+        session.status  = 'expired';
+        session.endTime = now;
+        expired = true;
+      }
     }
   }
 
-  // Recompute runway based on current wallet balance
+  // Recompute runway based on current wallet balance + remaining free minutes
   if (rate > 0) {
-    const runway = Math.floor((user.walletBalance || 0) / rate);
+    const runway = (session.freeMinutesRemaining || 0) + Math.floor((user.walletBalance || 0) / rate);
     session.paidUntil = new Date(now.getTime() + runway * 60000);
   }
 
@@ -87,6 +102,13 @@ async function chargeFinalPartialMinute(session) {
 
   const user = await User.findById(session.userId);
   if (!user) return { charged: 0, walletBalance: null };
+
+  // A trailing partial minute still covered by remaining free minutes costs nothing.
+  if ((session.freeMinutesRemaining || 0) > 0) {
+    session.freeMinutesRemaining -= 1;
+    session.lastChargedAt = now;
+    return { charged: 1, walletBalance: user.walletBalance || 0 };
+  }
 
   if ((user.walletBalance || 0) >= rate) {
     user.walletBalance = (user.walletBalance || 0) - rate;
@@ -232,7 +254,19 @@ exports.startChatFromWallet = async (req, res) => {
   const balance = user.walletBalance || 0;
   const rate    = Number(session.ratePerMinute || 0);
 
-  if (rate <= 0 || balance < rate) {
+  // Grant the one-time free trial on this session's first-ever activation.
+  // Guarded by both session.freeMinutesGranted (never granted on THIS
+  // session before) and the user-level flag (never granted on ANY session
+  // before) so resuming an expired session never re-grants.
+  if (!user.hasUsedFreeAstroTrial && !(session.freeMinutesGranted > 0)) {
+    session.freeMinutesGranted   = FREE_TRIAL_MINUTES;
+    session.freeMinutesRemaining = FREE_TRIAL_MINUTES;
+    user.hasUsedFreeAstroTrial   = true;
+    await user.save();
+  }
+  const freeMinutesRemaining = session.freeMinutesRemaining || 0;
+
+  if (rate <= 0 || (freeMinutesRemaining <= 0 && balance < rate)) {
     return res.status(400).json({
       success:         false,
       message:         'Insufficient wallet balance. Please top up your wallet to continue.',
@@ -243,8 +277,9 @@ exports.startChatFromWallet = async (req, res) => {
     });
   }
 
-  const now    = new Date();
-  const runway = Math.floor(balance / rate);
+  const now        = new Date();
+  const paidRunway = Math.floor(balance / rate);
+  const runway     = freeMinutesRemaining + paidRunway;
 
   session.status        = 'active';
   session.startTime     = now;      // (re)set start for THIS active run
@@ -262,11 +297,15 @@ exports.startChatFromWallet = async (req, res) => {
     success: true,
     data: {
       session,
-      walletBalance:  balance,
-      ratePerMinute:  rate,
-      runwayMinutes:  runway,
+      walletBalance:        balance,
+      ratePerMinute:        rate,
+      runwayMinutes:        runway,
+      freeMinutesGranted:   session.freeMinutesGranted || 0,
+      freeMinutesRemaining,
     },
-    message: `Chat started! You'll be charged ₹${rate}/min from your wallet as you talk.`,
+    message: freeMinutesRemaining > 0
+      ? `Chat started! Your first ${freeMinutesRemaining} min are free — after that you'll be charged ₹${rate}/min from your wallet.`
+      : `Chat started! You'll be charged ₹${rate}/min from your wallet as you talk.`,
   });
 };
 
@@ -349,7 +388,7 @@ exports.sendImageMessage = async (req, res) => {
 ───────────────────────────────────────────── */
 exports.getMessages = async (req, res) => {
   const session = await AstroSession.findById(req.params.id)
-    .select('messages status startTime paidUntil lastChargedAt ratePerMinute totalPaidMinutes totalPaidAmount blockMinutes userId');
+    .select('messages status startTime paidUntil lastChargedAt ratePerMinute totalPaidMinutes totalPaidAmount blockMinutes userId freeMinutesGranted freeMinutesRemaining');
   if (!session) return res.status(404).json({ success: false, message: 'Session not found.' });
 
   const wasActive = session.status === 'active';
@@ -377,6 +416,8 @@ exports.getMessages = async (req, res) => {
       blockMinutes:     session.blockMinutes,
       totalPaidMinutes: session.totalPaidMinutes,
       totalPaidAmount:  session.totalPaidAmount,
+      freeMinutesGranted:   session.freeMinutesGranted || 0,
+      freeMinutesRemaining: session.freeMinutesRemaining || 0,
       walletBalance,
       justExpired:      expired,
     },

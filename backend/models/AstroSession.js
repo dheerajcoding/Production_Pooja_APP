@@ -32,6 +32,12 @@ const astroSessionSchema = new mongoose.Schema(
     ratePerMinute:  { type: Number, required: true, min: 1 },  // locked at session start
     blockMinutes:   { type: Number, default: 10 },              // always 10 min per block
 
+    // One-time free trial (new users only — see User.hasUsedFreeAstroTrial).
+    // Granted once, on this session's first activation; consumed before any
+    // wallet charge in chargeAccruedUsage/chargeFinalPartialMinute.
+    freeMinutesGranted:   { type: Number, default: 0 },
+    freeMinutesRemaining: { type: Number, default: 0 },
+
     // Tracks paid time
     // paidUntil is DYNAMIC in per-minute billing: recomputed on each poll as
     // now + floor(walletBalance / ratePerMinute) * 60000 — i.e. how much

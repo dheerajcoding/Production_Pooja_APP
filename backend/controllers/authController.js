@@ -38,6 +38,7 @@ exports.register = async (req, res) => {
         role: user.role,
         phone: user.phone,
         profilePhoto: user.profilePhoto,
+        hasUsedFreeAstroTrial: user.hasUsedFreeAstroTrial,
       },
     },
   });
@@ -70,6 +71,7 @@ exports.login = async (req, res) => {
         phone: user.phone,
         profilePhoto: user.profilePhoto,
         address: user.address,
+        hasUsedFreeAstroTrial: user.hasUsedFreeAstroTrial,
       },
     },
   });
@@ -138,6 +140,7 @@ exports.googleLogin = async (req, res) => {
         phone: user.phone,
         profilePhoto: user.profilePhoto,
         address: user.address,
+        hasUsedFreeAstroTrial: user.hasUsedFreeAstroTrial,
       },
     },
   });
