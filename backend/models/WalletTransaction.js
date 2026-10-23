@@ -26,13 +26,19 @@ const walletTransactionSchema = new mongoose.Schema(
 
     description: { type: String, default: '' },
 
-    // Razorpay identifiers (only for topups)
-    razorpayOrderId:   { type: String, default: '' },
-    razorpayPaymentId: { type: String, default: '' },
+    // Razorpay identifiers (only for topups). No default — left unset for
+    // debit/refund entries, so the sparse unique index below only applies
+    // to real topup payment ids, never collides across unrelated debits.
+    razorpayOrderId:   { type: String },
+    razorpayPaymentId: { type: String },
   },
   { timestamps: true }
 );
 
 walletTransactionSchema.index({ userId: 1, createdAt: -1 });
+// Guards against a race where two simultaneous verify calls for the same
+// Razorpay payment both pass the findOne-based idempotency check before
+// either saves — the unique index makes the second insert fail instead.
+walletTransactionSchema.index({ razorpayPaymentId: 1 }, { unique: true, sparse: true });
 
 module.exports = mongoose.model('WalletTransaction', walletTransactionSchema);

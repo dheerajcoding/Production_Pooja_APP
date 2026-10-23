@@ -29,7 +29,7 @@ const userSchema = new mongoose.Schema(
     },
     isActive: { type: Boolean, default: true },
     walletBalance: { type: Number, default: 0, min: 0 },
-    // One-time free astrology trial (10 min) — consumed the first time this
+    // One-time free astrology trial (5 min) — consumed the first time this
     // user ever activates a chat session. See astroController.js.
     hasUsedFreeAstroTrial: { type: Boolean, default: false },
     resetPasswordOTP: { type: String, select: false },

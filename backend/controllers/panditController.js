@@ -177,7 +177,9 @@ exports.getMyBookings = async (req, res) => {
   const query = { panditId: pandit._id };
   if (status) query.status = status;
 
+  // Pandits never see the booking's rupee amount — only the devotee/admin do.
   const bookings = await Booking.find(query)
+    .select('-amount')
     .populate('poojaId', 'name image category price duration')
     .populate('userId', 'name phone address')
     .sort({ bookingDate: 1 })
@@ -248,11 +250,21 @@ exports.getEarningsSummary = async (req, res) => {
     { $group: { _id: null, total: { $sum: { $multiply: ['$amount', 0.8] } }, count: { $sum: 1 } } },
   ]);
 
-  const recentBookings = await Booking.find({ panditId: pandit._id, status: 'completed' })
+  const recentBookingsRaw = await Booking.find({ panditId: pandit._id, status: 'completed' })
     .sort({ completedAt: -1 })
     .limit(10)
     .populate('poojaId', 'name')
-    .populate('userId', 'name');
+    .populate('userId', 'name')
+    .lean();
+
+  // Pandits see their own payout (80% cut), never the devotee's booking amount.
+  const recentBookings = recentBookingsRaw.map((b) => ({
+    _id: b._id,
+    poojaId: b.poojaId,
+    userId: b.userId,
+    completedAt: b.completedAt,
+    payout: Math.round((b.amount || 0) * 0.8),
+  }));
 
   res.json({
     success: true,

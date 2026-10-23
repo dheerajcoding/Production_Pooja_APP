@@ -128,21 +128,42 @@ exports.verifyTopupPayment = async (req, res) => {
   const user = await User.findById(req.user._id);
   if (!user) return res.status(404).json({ success: false, message: 'User not found.' });
 
+  // Claim this payment id FIRST, before touching the wallet balance. The
+  // unique index on razorpayPaymentId makes this atomic: if two concurrent
+  // requests for the same payment race past the findOne check above, only
+  // one of these inserts can succeed — the balance is only ever credited
+  // by whichever request actually wins the claim.
+  let txn;
+  try {
+    txn = await WalletTransaction.create({
+      userId:            user._id,
+      type:              'topup',
+      amount:            base,
+      balanceAfter:      user.walletBalance || 0,
+      referenceType:     'topup',
+      description:       `Wallet top-up ₹${base} (paid ₹${total} = ₹${base} + ₹${gst} GST @ 18%)`,
+      razorpayOrderId:   razorpay_order_id,
+      razorpayPaymentId: razorpay_payment_id,
+    });
+  } catch (err) {
+    if (err?.code === 11000) {
+      const existing = await WalletTransaction.findOne({ razorpayPaymentId: razorpay_payment_id });
+      const freshUser = await User.findById(req.user._id).select('walletBalance');
+      return res.json({
+        success: true,
+        data: { balance: freshUser?.walletBalance ?? 0, transaction: existing, base, gst, total },
+        message: 'Top-up already credited.',
+      });
+    }
+    throw err;
+  }
+
   // Credit ONLY the base amount to the wallet. GST is a pass-through tax
   // paid to the government, not part of the user's spendable wallet.
   user.walletBalance = (user.walletBalance || 0) + base;
   await user.save();
-
-  const txn = await WalletTransaction.create({
-    userId:            user._id,
-    type:              'topup',
-    amount:            base,
-    balanceAfter:      user.walletBalance,
-    referenceType:     'topup',
-    description:       `Wallet top-up ₹${base} (paid ₹${total} = ₹${base} + ₹${gst} GST @ 18%)`,
-    razorpayOrderId:   razorpay_order_id,
-    razorpayPaymentId: razorpay_payment_id,
-  });
+  txn.balanceAfter = user.walletBalance;
+  await txn.save();
 
   res.json({
     success: true,

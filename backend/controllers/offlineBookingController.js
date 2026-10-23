@@ -175,7 +175,9 @@ exports.getPanditBookings = async (req, res) => {
   const page  = parseInt(req.query.page)  || 1;
 
   const total    = await OfflineBooking.countDocuments(filter);
+  // Pandits never see the booking's rupee amount — only the devotee/admin do.
   const bookings = await OfflineBooking.find(filter)
+    .select('-amount')
     .populate('userId', 'name email phone profilePhoto')
     .sort({ createdAt: -1 })
     .skip((page - 1) * limit)

@@ -4,7 +4,7 @@ const User               = require('../models/User');
 const WalletTransaction  = require('../models/WalletTransaction');
 
 const BLOCK_MINUTES = 10; // legacy schema field — no longer drives billing
-const FREE_TRIAL_MINUTES = 10; // one-time free minutes for a user's first-ever astro session
+const FREE_TRIAL_MINUTES = 5; // one-time free minutes for a user's first-ever astro session
 
 /* ─────────────────────────────────────────────
    HELPER — is this requester actually a party to
@@ -14,10 +14,15 @@ const FREE_TRIAL_MINUTES = 10; // one-time free minutes for a user's first-ever 
 ───────────────────────────────────────────── */
 async function isSessionParticipant(session, req) {
   if (req.user.role === 'admin') return true;
-  if (session.userId.toString() === req.user._id.toString()) return true;
+  // session.userId/panditId may be a raw ObjectId OR an already-populated
+  // document (whose own .toString() is NOT its hex id) — always compare
+  // against the real id either way.
+  const sessionUserId = (session.userId?._id || session.userId).toString();
+  if (sessionUserId === req.user._id.toString()) return true;
   if (req.user.role === 'pandit') {
     const pandit = await Pandit.findOne({ userId: req.user._id }).select('_id');
-    if (pandit && session.panditId.toString() === pandit._id.toString()) return true;
+    const sessionPanditId = (session.panditId?._id || session.panditId).toString();
+    if (pandit && sessionPanditId === pandit._id.toString()) return true;
   }
   return false;
 }
