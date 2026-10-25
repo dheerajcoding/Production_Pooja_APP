@@ -22,7 +22,7 @@ const onlineBookingSchema = new mongoose.Schema(
     // Booking lifecycle
     status: {
       type: String,
-      enum: ['pending', 'confirmed', 'assigned', 'in_progress', 'completed', 'cancelled'],
+      enum: ['pending', 'confirmed', 'assigned', 'in_progress', 'completed', 'cancelled', 'refund_processing', 'refunded'],
       default: 'pending',
     },
     adminNote: { type: String, default: '' },           // admin can add a note for user

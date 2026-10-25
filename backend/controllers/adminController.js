@@ -201,7 +201,7 @@ exports.assignPandit = async (req, res) => {
 
 exports.updateBookingStatus = async (req, res) => {
   const { status, cancellationReason } = req.body;
-  const allowedStatuses = ['pending', 'assigned', 'confirmed', 'completed', 'cancelled'];
+  const allowedStatuses = ['pending', 'assigned', 'confirmed', 'completed', 'cancelled', 'refund_processing', 'refunded'];
 
   if (!allowedStatuses.includes(status)) {
     return res.status(400).json({ success: false, message: 'Invalid status.' });
@@ -267,6 +267,10 @@ exports.refundBooking = async (req, res) => {
     razorpayRefundId: refund.id,
     refundedAt: new Date(),
   };
+  // Reflect the refund in the booking's own status too, so the user sees
+  // it on their booking's progress/status display — not just a background
+  // field they'd never notice.
+  booking.status = 'refunded';
   await booking.save();
 
   payment.status = 'refunded';

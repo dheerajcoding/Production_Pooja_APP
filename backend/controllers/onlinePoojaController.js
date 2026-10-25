@@ -328,6 +328,9 @@ exports.refundBooking = async (req, res) => {
     razorpayRefundId: refund.id,
     refundedAt: new Date(),
   };
+  // Reflect the refund in the booking's own status too, so the user sees
+  // it on their booking's progress/status display.
+  booking.status = 'refunded';
   await booking.save();
 
   res.json({

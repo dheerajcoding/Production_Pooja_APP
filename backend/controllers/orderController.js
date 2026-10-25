@@ -224,6 +224,9 @@ exports.refundOrder = async (req, res) => {
     razorpayRefundId: refund.id,
     refundedAt: new Date(),
   };
+  // Reflect the refund in the order's own status too, so the user sees it
+  // on their order's progress/status display.
+  order.status = 'refunded';
   await order.save();
 
   res.json({ success: true, message: `₹${amountRupees} (${percent}%) refunded successfully.`, data: order });
