@@ -3,7 +3,7 @@
  * Refund & Cancellation Policy, and Account Deletion Policy.
  *
  * Contact:
- *   +91 70420 64094 · saralpooja.info@gmail.com
+ *   +91 70420 64094 · Ritualmitra.info@gmail.com
  *   Dabri, Dwarka, New Delhi - 110045, India
  */
 
@@ -13,7 +13,7 @@ export const COMPANY_META = {
   tagline: 'Spiritual, Devotional & Astrological Services',
   address: 'Dabri, Dwarka, New Delhi - 110045, India',
   effective: '17 July 2026',
-  supportEmail: 'saralpooja.info@gmail.com',
+  supportEmail: 'Ritualmitra.info@gmail.com',
   supportPhone: '+91 70420 64094',
 };
 
@@ -45,7 +45,7 @@ export const DELETION_SECTIONS = [
       'Ritual Mitra provides multiple convenient methods for users to request account and data deletion:',
       '1. Web Form (No App Required): You can use the interactive deletion request form on this webpage by providing your registered email and phone number. No login or app installation is required.',
       '2. In-App Deletion: If you have the Ritual Mitra mobile application, go to Profile -> Account Deletion -> tap "Delete My Account" to initiate immediate deletion.',
-      '3. Email Customer Support: Send an email directly to saralpooja.info@gmail.com with the subject line "Account Deletion Request" from your registered email address.',
+      '3. Email Customer Support: Send an email directly to Ritualmitra.info@gmail.com with the subject line "Account Deletion Request" from your registered email address.',
       '4. Phone / WhatsApp Support: Contact our customer care at +91 70420 64094.',
     ],
   },
@@ -119,7 +119,7 @@ export const DELETION_SECTIONS = [
     body: [
       'For any questions, clarifications, or expedited deletion requests, please contact our Data Grievance Officer:',
       '• Company: Ritual Mitra',
-      '• Support Email: saralpooja.info@gmail.com',
+      '• Support Email: Ritualmitra.info@gmail.com',
       '• Support Phone: +91 70420 64094',
       '• Address: Dabri, Dwarka, New Delhi - 110045, India',
     ],
@@ -192,7 +192,7 @@ export const PRIVACY_SECTIONS = [
     title: 'Contact Us',
     body: [
       'If you have questions regarding this Privacy Policy, contact us at:',
-      '• Email: saralpooja.info@gmail.com',
+      '• Email: Ritualmitra.info@gmail.com',
       '• Phone: +91 70420 64094',
       '• Address: Dabri, Dwarka, New Delhi - 110045, India',
     ],

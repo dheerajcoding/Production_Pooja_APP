@@ -139,7 +139,7 @@ export default function Landing() {
 
         <div className="max-w-6xl mx-auto border-t border-gray-800 mt-8 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-500 text-center sm:text-left">
           <p>© {new Date().getFullYear()} Ritual Mitra. All rights reserved.</p>
-          <p>Support: saralpooja.info@gmail.com · +91 70420 64094</p>
+          <p>Support: Ritualmitra.info@gmail.com · +91 70420 64094</p>
         </div>
       </footer>
     </div>
