@@ -4,7 +4,6 @@ const User               = require('../models/User');
 const WalletTransaction  = require('../models/WalletTransaction');
 
 const BLOCK_MINUTES = 10; // legacy schema field — no longer drives billing
-const FREE_TRIAL_MINUTES = 5; // one-time free minutes for a user's first-ever astro session
 
 /* ─────────────────────────────────────────────
    HELPER — is this requester actually a party to
@@ -278,16 +277,9 @@ exports.startChatFromWallet = async (req, res) => {
   const balance = user.walletBalance || 0;
   const rate    = Number(session.ratePerMinute || 0);
 
-  // Grant the one-time free trial on this session's first-ever activation.
-  // Guarded by both session.freeMinutesGranted (never granted on THIS
-  // session before) and the user-level flag (never granted on ANY session
-  // before) so resuming an expired session never re-grants.
-  if (!user.hasUsedFreeAstroTrial && !(session.freeMinutesGranted > 0)) {
-    session.freeMinutesGranted   = FREE_TRIAL_MINUTES;
-    session.freeMinutesRemaining = FREE_TRIAL_MINUTES;
-    user.hasUsedFreeAstroTrial   = true;
-    await user.save();
-  }
+  // New signups start with a ₹40 wallet credit (see authController.register /
+  // googleLogin) — billing is uniform per-minute from the wallet, no
+  // separate free-trial bookkeeping.
   const freeMinutesRemaining = session.freeMinutesRemaining || 0;
 
   if (rate <= 0 || (freeMinutesRemaining <= 0 && balance < rate)) {
@@ -324,12 +316,8 @@ exports.startChatFromWallet = async (req, res) => {
       walletBalance:        balance,
       ratePerMinute:        rate,
       runwayMinutes:        runway,
-      freeMinutesGranted:   session.freeMinutesGranted || 0,
-      freeMinutesRemaining,
     },
-    message: freeMinutesRemaining > 0
-      ? `Chat started! Your first ${freeMinutesRemaining} min are free — after that you'll be charged ₹${rate}/min from your wallet.`
-      : `Chat started! You'll be charged ₹${rate}/min from your wallet as you talk.`,
+    message: `Chat started! You'll be charged ₹${rate}/min from your wallet as you talk.`,
   });
 };
 

@@ -2,10 +2,27 @@ const crypto = require('crypto');
 const { OAuth2Client } = require('google-auth-library');
 const User = require('../models/User');
 const Pandit = require('../models/Pandit');
+const WalletTransaction = require('../models/WalletTransaction');
 const generateToken = require('../utils/generateToken');
 const { sendEmail, passwordResetOtpTemplate } = require('../utils/email');
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_WEB_CLIENT_ID);
+
+// One-time welcome credit for new devotee signups — covers their first
+// few minutes of astrology chat. Spent like any other wallet balance;
+// once it runs out they top up like normal.
+const SIGNUP_WALLET_CREDIT = 40;
+
+async function grantSignupWalletCredit(user) {
+  await WalletTransaction.create({
+    userId:        user._id,
+    type:          'topup',
+    amount:        SIGNUP_WALLET_CREDIT,
+    balanceAfter:  user.walletBalance,
+    referenceType: '',
+    description:   `Welcome bonus — ₹${SIGNUP_WALLET_CREDIT} astrology credit`,
+  });
+}
 
 exports.register = async (req, res) => {
   const { name, email, password, phone, role } = req.body;
@@ -18,10 +35,15 @@ exports.register = async (req, res) => {
     return res.status(400).json({ success: false, message: 'Email already registered.' });
   }
 
-  const user = await User.create({ name, email, password, phone, role: userRole });
+  const user = await User.create({
+    name, email, password, phone, role: userRole,
+    walletBalance: userRole === 'user' ? SIGNUP_WALLET_CREDIT : 0,
+  });
 
   if (userRole === 'pandit') {
     await Pandit.create({ userId: user._id });
+  } else {
+    await grantSignupWalletCredit(user);
   }
 
   const token = generateToken({ id: user._id, role: user.role });
@@ -117,7 +139,9 @@ exports.googleLogin = async (req, res) => {
         googleId,
         role: 'user',
         profilePhoto: picture || '',
+        walletBalance: SIGNUP_WALLET_CREDIT,
       });
+      await grantSignupWalletCredit(user);
     }
   }
 
