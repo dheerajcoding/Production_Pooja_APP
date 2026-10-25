@@ -2,13 +2,14 @@ const express = require('express');
 const router = express.Router();
 const { protect } = require('../middleware/auth');
 const { authorize } = require('../middleware/role');
-const { createOrder, createOrderPayment, verifyOrderPayment, getMyOrders, getOrderById, getAllOrders, updateOrderStatus } = require('../controllers/orderController');
+const { createOrder, createOrderPayment, verifyOrderPayment, getMyOrders, getOrderById, cancelOrder, getAllOrders, updateOrderStatus } = require('../controllers/orderController');
 
 // User routes
 router.post('/', protect, authorize('user'), createOrder);
 router.post('/payment/create', protect, authorize('user'), createOrderPayment);
 router.post('/payment/verify', protect, authorize('user'), verifyOrderPayment);
 router.get('/my', protect, authorize('user'), getMyOrders);
+router.put('/:id/cancel', protect, authorize('user'), cancelOrder);
 router.get('/:id', protect, getOrderById);
 
 // Admin routes

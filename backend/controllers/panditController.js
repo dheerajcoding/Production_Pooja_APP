@@ -181,10 +181,11 @@ exports.getMyBookings = async (req, res) => {
   if (status) query.status = status;
 
   // Pandits never see the booking's rupee amount — only the devotee/admin do.
+  // Pandits also never see the devotee's phone — only admin can view it.
   const bookings = await Booking.find(query)
     .select('-amount')
     .populate('poojaId', 'name image category price duration')
-    .populate('userId', 'name phone address')
+    .populate('userId', 'name address')
     .sort({ bookingDate: 1 })
     .limit(parseInt(limit))
     .skip((parseInt(page) - 1) * parseInt(limit));

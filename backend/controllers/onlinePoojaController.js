@@ -469,9 +469,10 @@ exports.getPanditAssignedBookings = async (req, res) => {
   if (status) query.status = status;
 
   // Pandits never see any monetary amount — booking amount or pooja price.
+  // Pandits also never see the devotee's phone — only admin can view it.
   const bookings = await OnlineBooking.find(query)
     .select('-amount')
-    .populate('userId', 'name email phone')
+    .populate('userId', 'name email')
     .populate('onlinePoojaId', 'name category templeLocation duration')
     .sort({ assignedAt: -1, createdAt: -1 });
 

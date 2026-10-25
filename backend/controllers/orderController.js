@@ -150,6 +150,21 @@ exports.getOrderById = async (req, res) => {
   res.json({ success: true, data: order });
 };
 
+exports.cancelOrder = async (req, res) => {
+  const order = await Order.findOne({ _id: req.params.id, userId: req.user._id });
+  if (!order) return res.status(404).json({ success: false, message: 'Order not found.' });
+
+  if (['shipped', 'delivered', 'cancelled'].includes(order.status)) {
+    return res.status(400).json({ success: false, message: `Cannot cancel an order that is already ${order.status}.` });
+  }
+
+  order.status = 'cancelled';
+  order.cancellationReason = req.body.reason || 'Cancelled by user.';
+  await order.save();
+
+  res.json({ success: true, message: 'Order cancelled.', data: order });
+};
+
 // Admin
 exports.getAllOrders = async (req, res) => {
   const { page = 1, limit = 20, status } = req.query;
