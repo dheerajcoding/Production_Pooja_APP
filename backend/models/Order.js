@@ -32,6 +32,16 @@ const orderSchema = new mongoose.Schema(
     deliveryNotes: { type: String, default: '' },
     cancellationReason: { type: String, default: '' },
     deliveredAt: { type: Date },
+
+    // Admin-initiated partial/full refund (user requests via customer
+    // support, admin processes from the dashboard). See orderController.js.
+    refund: {
+      status:           { type: String, enum: ['none', 'refunded', 'failed'], default: 'none' },
+      percent:          { type: Number },
+      amount:           { type: Number },
+      razorpayRefundId: { type: String },
+      refundedAt:       { type: Date },
+    },
   },
   { timestamps: true }
 );

@@ -10,6 +10,8 @@ const getRazorpay = () => new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
+const ALLOWED_REFUND_PERCENTS = [100, 70, 50];
+
 // Create order from cart
 exports.createOrder = async (req, res) => {
   const { address, deliveryNotes } = req.body;
@@ -179,6 +181,52 @@ exports.getAllOrders = async (req, res) => {
 
   const total = await Order.countDocuments(query);
   res.json({ success: true, data: { orders, pagination: { page: parseInt(page), limit: parseInt(limit), total, pages: Math.ceil(total / limit) } } });
+};
+
+exports.refundOrder = async (req, res) => {
+  const percent = Number(req.body.percent);
+  if (!ALLOWED_REFUND_PERCENTS.includes(percent)) {
+    return res.status(400).json({ success: false, message: 'Refund percent must be 100, 70, or 50.' });
+  }
+
+  const order = await Order.findById(req.params.id);
+  if (!order) return res.status(404).json({ success: false, message: 'Order not found.' });
+  if (!order.isPaid || !order.razorpayPaymentId) {
+    return res.status(400).json({ success: false, message: 'This order was never paid.' });
+  }
+  if (order.refund?.status === 'refunded') {
+    return res.status(400).json({ success: false, message: 'This order has already been refunded.' });
+  }
+
+  const amountRupees = Math.round(order.totalAmount * percent) / 100;
+  const amountPaise  = Math.round(amountRupees * 100);
+
+  let refund;
+  try {
+    refund = await getRazorpay().payments.refund(order.razorpayPaymentId, {
+      amount: amountPaise,
+      speed: 'normal',
+      notes: { orderId: String(order._id), percent: String(percent) },
+    });
+  } catch (err) {
+    order.refund = { status: 'failed', percent, amount: amountRupees };
+    await order.save();
+    return res.status(502).json({
+      success: false,
+      message: err?.error?.description || 'Razorpay refund request failed. Please try again.',
+    });
+  }
+
+  order.refund = {
+    status: 'refunded',
+    percent,
+    amount: amountRupees,
+    razorpayRefundId: refund.id,
+    refundedAt: new Date(),
+  };
+  await order.save();
+
+  res.json({ success: true, message: `₹${amountRupees} (${percent}%) refunded successfully.`, data: order });
 };
 
 exports.updateOrderStatus = async (req, res) => {
