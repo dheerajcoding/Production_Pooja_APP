@@ -69,7 +69,7 @@ exports.getMyProfile = async (req, res) => {
 exports.updateMyProfile = async (req, res) => {
   const {
     bio, experience, languages, expertise, location,
-    aadhaarNumber, panNumber, education, operationalCity, basicDakshinaRate,
+    aadhaarNumber, panNumber, education, operationalCity,
     currentAddress, bankDetails, declarationAccepted,
   } = req.body;
   const pandit = await Pandit.findOne({ userId: req.user._id });
@@ -101,7 +101,8 @@ exports.updateMyProfile = async (req, res) => {
   // Professional / service
   if (education !== undefined)         pandit.education = education;
   if (operationalCity !== undefined)   pandit.operationalCity = operationalCity;
-  if (basicDakshinaRate !== undefined) pandit.basicDakshinaRate = Number(basicDakshinaRate) || 0;
+  // Consultation fee is admin-set only (see adminController.updatePandit) —
+  // pandits cannot set their own rate.
 
   // Address (multipart FormData delivers nested objects as JSON strings)
   let addrObj = currentAddress;
@@ -232,6 +233,15 @@ exports.completeBooking = async (req, res) => {
   if (!pandit) return res.status(404).json({ success: false, message: 'Pandit profile not found.' });
   const booking = await Booking.findOne({ _id: req.params.id, panditId: pandit._id, status: 'confirmed' });
   if (!booking) return res.status(404).json({ success: false, message: 'Booking not found.' });
+
+  // Can only be marked completed on/after the booking's own day — not before.
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const bookingDay = new Date(booking.bookingDate);
+  bookingDay.setHours(0, 0, 0, 0);
+  if (today < bookingDay) {
+    return res.status(400).json({ success: false, message: 'This booking can only be marked completed on or after its scheduled date.' });
+  }
 
   booking.status = 'completed';
   booking.completedAt = new Date();

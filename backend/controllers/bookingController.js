@@ -44,7 +44,7 @@ exports.createBooking = async (req, res) => {
 exports.getBookingById = async (req, res) => {
   const booking = await Booking.findById(req.params.id)
     .populate('poojaId', 'name image category price duration')
-    .populate({ path: 'panditId', populate: { path: 'userId', select: 'name phone' } })
+    .populate({ path: 'panditId', populate: { path: 'userId', select: 'name phone profilePhoto' } })
     .populate('userId', 'name phone email');
 
   if (!booking) return res.status(404).json({ success: false, message: 'Booking not found.' });

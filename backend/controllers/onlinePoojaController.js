@@ -520,6 +520,17 @@ exports.panditCompleteBooking = async (req, res) => {
     return res.status(400).json({ success: false, message: `Cannot complete a booking in status "${booking.status}".` });
   }
 
+  // Can only be marked completed on/after the booking's own day — not before.
+  if (booking.preferredDate) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const bookingDay = new Date(booking.preferredDate);
+    bookingDay.setHours(0, 0, 0, 0);
+    if (today < bookingDay) {
+      return res.status(400).json({ success: false, message: 'This booking can only be marked completed on or after its scheduled date.' });
+    }
+  }
+
   if (typeof req.body.panditNote === 'string') {
     booking.panditNote = req.body.panditNote;
   }
