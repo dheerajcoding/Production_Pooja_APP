@@ -210,7 +210,9 @@ exports.acceptRequest = async (req, res) => {
   if (req.body.note) booking.panditNote = req.body.note;
   await booking.save();
 
-  res.json({ success: true, message: 'Request accepted. User will be notified to complete payment.', data: booking });
+  const data = booking.toObject();
+  delete data.amount; // pandits never see the booking's rupee amount
+  res.json({ success: true, message: 'Request accepted. User will be notified to complete payment.', data });
 };
 
 // Step 2b — Pandit rejects the request
@@ -231,7 +233,9 @@ exports.rejectRequest = async (req, res) => {
   if (req.body.reason) booking.rejectionReason = req.body.reason;
   await booking.save();
 
-  res.json({ success: true, message: 'Request rejected.', data: booking });
+  const data = booking.toObject();
+  delete data.amount; // pandits never see the booking's rupee amount
+  res.json({ success: true, message: 'Request rejected.', data });
 };
 
 // Pandit marks confirmed booking as completed
@@ -258,7 +262,9 @@ exports.markOfflineComplete = async (req, res) => {
   pandit.earnings          += booking.amount;
   await pandit.save();
 
-  res.json({ success: true, message: 'Booking marked as completed.', data: booking });
+  const data = booking.toObject();
+  delete data.amount; // pandits never see the booking's rupee amount
+  res.json({ success: true, message: 'Booking marked as completed.', data });
 };
 
 // ─── ADMIN ────────────────────────────────────────────────────────────────────

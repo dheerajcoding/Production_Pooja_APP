@@ -49,7 +49,11 @@ exports.getAllUsers = async (req, res) => {
   const { page = 1, limit = 20, role, search } = req.query;
   const query = {};
   if (role) query.role = role;
-  if (search) query.$or = [{ name: { $regex: search, $options: 'i' } }, { email: { $regex: search, $options: 'i' } }];
+  if (search) query.$or = [
+    { name: { $regex: search, $options: 'i' } },
+    { email: { $regex: search, $options: 'i' } },
+    { phone: { $regex: search, $options: 'i' } },
+  ];
 
   const users = await User.find(query)
     .sort({ createdAt: -1 })

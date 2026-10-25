@@ -205,7 +205,9 @@ exports.acceptBooking = async (req, res) => {
 
   booking.status = 'confirmed';
   await booking.save();
-  res.json({ success: true, message: 'Booking accepted.', data: booking });
+  const data = booking.toObject();
+  delete data.amount; // pandits never see the booking's rupee amount
+  res.json({ success: true, message: 'Booking accepted.', data });
 };
 
 exports.rejectBooking = async (req, res) => {
@@ -218,7 +220,9 @@ exports.rejectBooking = async (req, res) => {
   booking.panditId = undefined;
   booking.panditNotes = req.body.reason || '';
   await booking.save();
-  res.json({ success: true, message: 'Booking rejected. Admin will reassign.', data: booking });
+  const data = booking.toObject();
+  delete data.amount; // pandits never see the booking's rupee amount
+  res.json({ success: true, message: 'Booking rejected. Admin will reassign.', data });
 };
 
 exports.completeBooking = async (req, res) => {
@@ -235,9 +239,13 @@ exports.completeBooking = async (req, res) => {
   pandit.earnings += booking.amount * 0.8;
   await pandit.save();
 
-  res.json({ success: true, message: 'Booking marked as completed.', data: booking });
+  const data = booking.toObject();
+  delete data.amount; // pandits never see the booking's rupee amount
+  res.json({ success: true, message: 'Booking marked as completed.', data });
 };
 
+// Non-monetary activity summary — pandits never see ₹ figures (amount,
+// payout, or earnings). Admin calculates and wires payment outside the app.
 exports.getEarningsSummary = async (req, res) => {
   const pandit = await Pandit.findOne({ userId: req.user._id });
   if (!pandit) return res.status(404).json({ success: false, message: 'Pandit profile not found.' });
@@ -245,10 +253,9 @@ exports.getEarningsSummary = async (req, res) => {
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-  const monthlyEarnings = await Booking.aggregate([
-    { $match: { panditId: pandit._id, status: 'completed', completedAt: { $gte: monthStart } } },
-    { $group: { _id: null, total: { $sum: { $multiply: ['$amount', 0.8] } }, count: { $sum: 1 } } },
-  ]);
+  const monthlyCompleted = await Booking.countDocuments({
+    panditId: pandit._id, status: 'completed', completedAt: { $gte: monthStart },
+  });
 
   const recentBookingsRaw = await Booking.find({ panditId: pandit._id, status: 'completed' })
     .sort({ completedAt: -1 })
@@ -257,23 +264,19 @@ exports.getEarningsSummary = async (req, res) => {
     .populate('userId', 'name')
     .lean();
 
-  // Pandits see their own payout (80% cut), never the devotee's booking amount.
   const recentBookings = recentBookingsRaw.map((b) => ({
     _id: b._id,
     poojaId: b.poojaId,
     userId: b.userId,
     completedAt: b.completedAt,
-    payout: Math.round((b.amount || 0) * 0.8),
   }));
 
   res.json({
     success: true,
     data: {
-      totalEarnings: pandit.earnings,
       totalBookings: pandit.totalBookings,
       completedBookings: pandit.completedBookings,
-      monthlyEarnings: monthlyEarnings[0]?.total || 0,
-      monthlyBookings: monthlyEarnings[0]?.count || 0,
+      monthlyBookings: monthlyCompleted,
       recentBookings,
     },
   });

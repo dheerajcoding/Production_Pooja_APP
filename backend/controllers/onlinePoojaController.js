@@ -413,9 +413,11 @@ exports.getPanditAssignedBookings = async (req, res) => {
   const query = { panditId: pandit._id };
   if (status) query.status = status;
 
+  // Pandits never see any monetary amount — booking amount or pooja price.
   const bookings = await OnlineBooking.find(query)
+    .select('-amount')
     .populate('userId', 'name email phone')
-    .populate('onlinePoojaId', 'name category price templeLocation duration')
+    .populate('onlinePoojaId', 'name category templeLocation duration')
     .sort({ assignedAt: -1, createdAt: -1 });
 
   res.json({ success: true, data: bookings });
@@ -441,7 +443,9 @@ exports.panditStartBooking = async (req, res) => {
   booking.status = 'in_progress';
   booking.startedAt = new Date();
   await booking.save();
-  res.json({ success: true, message: 'Booking started.', data: booking });
+  const data = booking.toObject();
+  delete data.amount; // pandits never see the booking's rupee amount
+  res.json({ success: true, message: 'Booking started.', data });
 };
 
 // ── Pandit: Mark completed (with optional note) ───────────────────────────────
@@ -467,5 +471,7 @@ exports.panditCompleteBooking = async (req, res) => {
   booking.status = 'completed';
   booking.completedAt = new Date();
   await booking.save();
-  res.json({ success: true, message: 'Booking marked as completed.', data: booking });
+  const data = booking.toObject();
+  delete data.amount; // pandits never see the booking's rupee amount
+  res.json({ success: true, message: 'Booking marked as completed.', data });
 };
