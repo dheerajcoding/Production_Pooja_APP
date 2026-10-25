@@ -1,8 +1,16 @@
+const Razorpay = require('razorpay');
 const User = require('../models/User');
 const Pandit = require('../models/Pandit');
 const Booking = require('../models/Booking');
 const Payment = require('../models/Payment');
 const Pooja = require('../models/Pooja');
+
+const getRazorpay = () => new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
+
+const ALLOWED_REFUND_PERCENTS = [100, 70, 50];
 
 exports.getDashboardStats = async (req, res) => {
   const [
@@ -208,4 +216,65 @@ exports.updateBookingStatus = async (req, res) => {
   await booking.save();
 
   res.json({ success: true, message: 'Booking status updated.', data: booking });
+};
+
+// Admin-initiated refund — the user requests this by contacting customer
+// support (phone/email), not through the app. Admin picks 100/70/50% and
+// this calls Razorpay's Refunds API against the original payment.
+exports.refundBooking = async (req, res) => {
+  const percent = Number(req.body.percent);
+  if (!ALLOWED_REFUND_PERCENTS.includes(percent)) {
+    return res.status(400).json({ success: false, message: 'Refund percent must be 100, 70, or 50.' });
+  }
+
+  const booking = await Booking.findById(req.params.id);
+  if (!booking) return res.status(404).json({ success: false, message: 'Booking not found.' });
+  if (!booking.isPaid) {
+    return res.status(400).json({ success: false, message: 'This booking was never paid.' });
+  }
+  if (booking.refund?.status === 'refunded') {
+    return res.status(400).json({ success: false, message: 'This booking has already been refunded.' });
+  }
+
+  const payment = await Payment.findById(booking.paymentId);
+  if (!payment || !payment.razorpayPaymentId) {
+    return res.status(400).json({ success: false, message: 'No captured payment found for this booking.' });
+  }
+
+  const amountRupees = Math.round(booking.amount * percent) / 100;
+  const amountPaise  = Math.round(amountRupees * 100);
+
+  let refund;
+  try {
+    refund = await getRazorpay().payments.refund(payment.razorpayPaymentId, {
+      amount: amountPaise,
+      speed: 'normal',
+      notes: { bookingId: String(booking._id), percent: String(percent) },
+    });
+  } catch (err) {
+    booking.refund = { status: 'failed', percent, amount: amountRupees };
+    await booking.save();
+    return res.status(502).json({
+      success: false,
+      message: err?.error?.description || 'Razorpay refund request failed. Please try again.',
+    });
+  }
+
+  booking.refund = {
+    status: 'refunded',
+    percent,
+    amount: amountRupees,
+    razorpayRefundId: refund.id,
+    refundedAt: new Date(),
+  };
+  await booking.save();
+
+  payment.status = 'refunded';
+  await payment.save();
+
+  res.json({
+    success: true,
+    message: `₹${amountRupees} (${percent}%) refunded successfully.`,
+    data: booking,
+  });
 };

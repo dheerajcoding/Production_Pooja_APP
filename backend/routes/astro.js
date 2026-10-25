@@ -32,6 +32,7 @@ router.put( '/session/:id/end',                protect, ctrl.endSession);
 
 // ── Admin ────────────────────────────────────────────────────
 router.get('/admin/stats',                     protect, authorize('admin'),  ctrl.adminGetStats);
+router.get('/admin/payouts',                   protect, authorize('admin'),  ctrl.adminGetPanditPayouts);
 router.get('/admin/sessions',                  protect, authorize('admin'),  ctrl.adminGetAllSessions);
 router.put('/admin/pandit/:panditId',          protect, authorize('admin'),  ctrl.adminSetAstroConfig);
 router.put('/admin/session/:id/end',           protect, authorize('admin'),  ctrl.adminEndSession);

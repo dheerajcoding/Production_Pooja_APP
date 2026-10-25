@@ -2,6 +2,8 @@ const fs = require('fs');
 const path = require('path');
 const Pandit = require('../models/Pandit');
 const Booking = require('../models/Booking');
+const OnlineBooking = require('../models/OnlineBooking');
+const AstroSession = require('../models/AstroSession');
 const User = require('../models/User');
 
 const getFileUrl = (req, filename) => {
@@ -253,16 +255,23 @@ exports.getEarningsSummary = async (req, res) => {
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-  const monthlyCompleted = await Booking.countDocuments({
-    panditId: pandit._id, status: 'completed', completedAt: { $gte: monthStart },
-  });
-
-  const recentBookingsRaw = await Booking.find({ panditId: pandit._id, status: 'completed' })
-    .sort({ completedAt: -1 })
-    .limit(10)
-    .populate('poojaId', 'name')
-    .populate('userId', 'name')
-    .lean();
+  const [monthlyCompleted, homeCompleted, onlineCompleted, recentBookingsRaw, astroAgg] = await Promise.all([
+    Booking.countDocuments({
+      panditId: pandit._id, status: 'completed', completedAt: { $gte: monthStart },
+    }),
+    Booking.countDocuments({ panditId: pandit._id, status: 'completed' }),
+    OnlineBooking.countDocuments({ panditId: pandit._id, status: 'completed' }),
+    Booking.find({ panditId: pandit._id, status: 'completed' })
+      .sort({ completedAt: -1 })
+      .limit(10)
+      .populate('poojaId', 'name')
+      .populate('userId', 'name')
+      .lean(),
+    AstroSession.aggregate([
+      { $match: { panditId: pandit._id } },
+      { $group: { _id: null, totalMinutes: { $sum: '$totalPaidMinutes' } } },
+    ]),
+  ]);
 
   const recentBookings = recentBookingsRaw.map((b) => ({
     _id: b._id,
@@ -276,6 +285,9 @@ exports.getEarningsSummary = async (req, res) => {
     data: {
       totalBookings: pandit.totalBookings,
       completedBookings: pandit.completedBookings,
+      homeBookings: homeCompleted,
+      onlineBookings: onlineCompleted,
+      astrologyMinutes: Math.round(astroAgg[0]?.totalMinutes || 0),
       monthlyBookings: monthlyCompleted,
       recentBookings,
     },

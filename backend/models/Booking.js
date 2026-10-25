@@ -26,6 +26,16 @@ const bookingSchema = new mongoose.Schema(
     cancellationReason: { type: String, default: '' },
     completedAt: { type: Date },
     panditNotes: { type: String, default: '' },
+
+    // Admin-initiated partial/full refund (user requests via customer
+    // support, admin processes from the dashboard). See adminController.js.
+    refund: {
+      status:           { type: String, enum: ['none', 'refunded', 'failed'], default: 'none' },
+      percent:          { type: Number },
+      amount:           { type: Number },
+      razorpayRefundId: { type: String },
+      refundedAt:       { type: Date },
+    },
   },
   { timestamps: true }
 );

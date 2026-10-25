@@ -37,6 +37,16 @@ const offlineBookingSchema = new mongoose.Schema({
   panditNote:      { type: String, default: '' },
   adminNote:       { type: String, default: '' },
   completedAt:     { type: Date },
+
+  // Admin-initiated partial/full refund (user requests via customer
+  // support, admin processes from the dashboard).
+  refund: {
+    status:           { type: String, enum: ['none', 'refunded', 'failed'], default: 'none' },
+    percent:          { type: Number },
+    amount:           { type: Number },
+    razorpayRefundId: { type: String },
+    refundedAt:       { type: Date },
+  },
 }, { timestamps: true });
 
 offlineBookingSchema.index({ userId: 1, status: 1 });

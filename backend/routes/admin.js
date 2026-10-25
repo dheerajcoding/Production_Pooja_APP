@@ -5,7 +5,7 @@ const { authorize } = require('../middleware/role');
 const {
   getDashboardStats, getAllUsers, toggleUserStatus,
   getAllPandits, getPanditDetails, approvePandit, rejectPandit, updatePandit,
-  getAllBookings, assignPandit, updateBookingStatus,
+  getAllBookings, assignPandit, updateBookingStatus, refundBooking,
 } = require('../controllers/adminController');
 
 router.use(protect, authorize('admin'));
@@ -21,5 +21,6 @@ router.put('/pandits/:id', updatePandit);
 router.get('/bookings', getAllBookings);
 router.put('/bookings/:id/assign', assignPandit);
 router.put('/bookings/:id/status', updateBookingStatus);
+router.put('/bookings/:id/refund', refundBooking);
 
 module.exports = router;

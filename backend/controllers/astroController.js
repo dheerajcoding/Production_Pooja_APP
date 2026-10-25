@@ -626,7 +626,7 @@ exports.getPanditSessionHistory = async (req, res) => {
     .sort({ createdAt: -1 })
     .limit(20)
     .populate('userId', 'name')
-    .select('-messages');
+    .select('-messages -totalPaidAmount'); // pandits never see ₹ figures
 
   res.json({ success: true, data: sessions });
 };
@@ -713,4 +713,37 @@ exports.adminGetStats = async (req, res) => {
       totalRevenue:     revenue[0]?.total || 0,
     },
   });
+};
+
+/* ─────────────────────────────────────────────
+   ADMIN — per-pandit astrology minutes + payout
+   (pandit gets 70% of totalPaidAmount; admin pays manually)
+───────────────────────────────────────────── */
+exports.adminGetPanditPayouts = async (req, res) => {
+  const rows = await AstroSession.aggregate([
+    { $group: { _id: '$panditId', totalMinutes: { $sum: '$totalPaidMinutes' }, totalPaidAmount: { $sum: '$totalPaidAmount' }, sessionCount: { $sum: 1 } } },
+    { $match: { totalMinutes: { $gt: 0 } } },
+    { $sort: { totalMinutes: -1 } },
+  ]);
+
+  const pandits = await Pandit.find({ _id: { $in: rows.map((r) => r._id) } })
+    .select('astroRate isAstrologer')
+    .populate('userId', 'name');
+
+  const panditMap = new Map(pandits.map((p) => [String(p._id), p]));
+
+  const data = rows.map((r) => {
+    const p = panditMap.get(String(r._id));
+    return {
+      panditId: r._id,
+      panditName: p?.userId?.name || 'Unknown',
+      astroRate: p?.astroRate ?? null,
+      totalMinutes: Math.round(r.totalMinutes),
+      totalPaidAmount: r.totalPaidAmount,
+      payout: Math.round(r.totalPaidAmount * 0.7),
+      sessionCount: r.sessionCount,
+    };
+  });
+
+  res.json({ success: true, data });
 };

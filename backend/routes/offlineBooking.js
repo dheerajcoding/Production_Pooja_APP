@@ -23,5 +23,6 @@ router.put('/pandit/:id/complete',   protect, authorize('pandit'), ctrl.markOffl
 // Admin
 router.get('/admin/all',         protect, authorize('admin'), ctrl.getAllOfflineBookings);
 router.put('/admin/:id/status',  protect, authorize('admin'), ctrl.adminUpdateOfflineStatus);
+router.put('/admin/:id/refund',  protect, authorize('admin'), ctrl.refundOfflineBooking);
 
 module.exports = router;

@@ -16,6 +16,7 @@ const {
   deleteOnlinePooja,
   getAllOnlineBookingsAdmin,
   updateBookingStatus,
+  refundBooking,
   uploadVideoToBooking,
   assignPanditToBooking,
   uploadCompletionImagesToBooking,
@@ -45,6 +46,7 @@ router.delete('/:id', protect, authorize('admin'), deleteOnlinePooja);
 // ── Admin: Booking management ─────────────────────────────────────────────────
 router.get('/admin/bookings',                          protect, authorize('admin'), getAllOnlineBookingsAdmin);
 router.put('/admin/bookings/:bookingId/status',        protect, authorize('admin'), updateBookingStatus);
+router.put('/admin/bookings/:bookingId/refund',        protect, authorize('admin'), refundBooking);
 router.put('/admin/bookings/:bookingId/assign-pandit', protect, authorize('admin'), assignPanditToBooking);
 router.put('/admin/bookings/:bookingId/notes',         protect, authorize('admin'), updateCompletionNotes);
 router.put('/admin/bookings/:bookingId/mark-completed',protect, authorize('admin'), adminMarkBookingCompleted);

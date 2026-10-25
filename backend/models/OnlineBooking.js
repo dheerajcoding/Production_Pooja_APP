@@ -50,6 +50,16 @@ const onlineBookingSchema = new mongoose.Schema(
       uploadedAt: { type: Date, default: Date.now },
     }],
     completionNotes: { type: String, default: '' },     // admin-authored notes shown to user
+
+    // Admin-initiated partial/full refund (user requests via customer
+    // support, admin processes from the dashboard).
+    refund: {
+      status:           { type: String, enum: ['none', 'refunded', 'failed'], default: 'none' },
+      percent:          { type: Number },
+      amount:           { type: Number },
+      razorpayRefundId: { type: String },
+      refundedAt:       { type: Date },
+    },
   },
   { timestamps: true }
 );
