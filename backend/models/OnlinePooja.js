@@ -4,14 +4,11 @@ const specialPoojaSchema = new mongoose.Schema(
   {
     name:        { type: String, required: true, trim: true, maxlength: 200 },
     description: { type: String, required: true, maxlength: 3000 },
-    category: {
-      type: String,
-      required: true,
-      enum: ['Griha Pravesh', 'Satyanarayan Katha', 'Navratri', 'Ganesh Puja', 'Laxmi Puja',
-             'Shradh', 'Vivah', 'Namkaran', 'Mundan', 'Rudrabhishek', 'Sundarkand Path', 'Other'],
-    },
+    // Admin-managed categories (see PoojaCategory) aren't a fixed set, so this
+    // can't be a Mongoose enum — it's free text, optional.
+    category:     { type: String, default: '', trim: true, maxlength: 100 },
     price:        { type: Number, required: true, min: 0 },
-    duration:     { type: String, required: true, default: '1-2 hours' },
+    duration:     { type: String, default: '' },
     image:        { type: String, default: '' },
     imagePublicId:{ type: String, default: '' },
     language:     { type: String, default: 'Hindi' },

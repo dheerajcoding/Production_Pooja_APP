@@ -7,6 +7,9 @@ const bookingSchema = new mongoose.Schema(
     poojaId: { type: mongoose.Schema.Types.ObjectId, ref: 'Pooja', required: true },
     bookingDate: { type: Date, required: true },
     bookingTime: { type: String, required: true },
+    // Contact number for THIS booking specifically — may differ from the
+    // user's account phone (e.g. booking on behalf of a relative).
+    contactPhone: { type: String, required: true, trim: true },
     address: {
       street: { type: String, required: true },
       city: { type: String, required: true },

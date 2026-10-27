@@ -88,8 +88,11 @@ exports.getOnlinePoojaById = async (req, res) => {
 // ── User: Book & Pay ──────────────────────────────────────────────────────────
 
 exports.bookOnlinePooja = async (req, res) => {
-  const { preferredDate, gotraName, wishes, memberNames, address } = req.body;
+  const { preferredDate, gotraName, wishes, memberNames, contactPhone, address } = req.body;
 
+  if (!contactPhone || !contactPhone.trim()) {
+    return res.status(400).json({ success: false, message: 'Contact number is required.' });
+  }
   if (!address || !address.trim()) {
     return res.status(400).json({ success: false, message: 'Delivery address is required for prasad & certificates.' });
   }
@@ -107,6 +110,7 @@ exports.bookOnlinePooja = async (req, res) => {
     gotraName: gotraName || '',
     wishes: wishes || '',
     memberNames: memberNames || '',
+    contactPhone: contactPhone.trim(),
     address: address || '',
   });
 

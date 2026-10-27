@@ -4,7 +4,11 @@ const { sendEmail, bookingConfirmTemplate } = require('../utils/email');
 const User = require('../models/User');
 
 exports.createBooking = async (req, res) => {
-  const { poojaId, bookingDate, bookingTime, address, specialRequirements } = req.body;
+  const { poojaId, bookingDate, bookingTime, contactPhone, address, specialRequirements } = req.body;
+
+  if (!contactPhone || !contactPhone.trim()) {
+    return res.status(400).json({ success: false, message: 'Contact number is required.' });
+  }
 
   const pooja = await Pooja.findById(poojaId);
   if (!pooja || !pooja.isActive) {
@@ -21,6 +25,7 @@ exports.createBooking = async (req, res) => {
     poojaId,
     bookingDate: date,
     bookingTime,
+    contactPhone: contactPhone.trim(),
     address,
     specialRequirements,
     amount: pooja.price,

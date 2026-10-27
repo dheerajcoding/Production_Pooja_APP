@@ -11,6 +11,9 @@ const onlineBookingSchema = new mongoose.Schema(
     gotraName:      { type: String, default: '' },      // family gotra
     wishes:         { type: String, default: '' },      // what the user wants to pray for
     memberNames:    { type: String, default: '' },      // names of family members for pooja
+    // Contact number for THIS booking specifically — may differ from the
+    // user's account phone (e.g. booking on behalf of a relative).
+    contactPhone:   { type: String, required: true, trim: true },
     address:        { type: String, required: true, trim: true },  // where to dispatch prasad & certificates
 
     // Payment
