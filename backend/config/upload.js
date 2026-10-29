@@ -12,6 +12,7 @@ ensureDir(path.join(__dirname, '../uploads/products'));
 ensureDir(path.join(__dirname, '../uploads/videos'));
 ensureDir(path.join(__dirname, '../uploads/chat'));
 ensureDir(path.join(__dirname, '../uploads/completions'));
+ensureDir(path.join(__dirname, '../uploads/festivals'));
 
 const createStorage = (folder) =>
   multer.diskStorage({
@@ -49,6 +50,7 @@ const uploadProductImage       = multer({ storage: createStorage('products'),   
 const uploadPoojaVideo         = multer({ storage: createStorage('videos'),      ...videoOpts });
 const uploadChatImage          = multer({ storage: createStorage('chat'),        ...imgOpts });
 const uploadCompletionImages   = multer({ storage: createStorage('completions'), ...imgOpts });
+const uploadFestivalImage      = multer({ storage: createStorage('festivals'),   ...imgOpts });
 
 module.exports = {
   uploadProfilePhoto,
@@ -57,4 +59,5 @@ module.exports = {
   uploadPoojaVideo,
   uploadChatImage,
   uploadCompletionImages,
+  uploadFestivalImage,
 };

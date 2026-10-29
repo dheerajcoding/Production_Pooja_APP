@@ -13,6 +13,7 @@ const festivalSchema = new mongoose.Schema(
     date:        { type: Date,   required: true },
     description: { type: String, default: '', maxlength: 500 },
     imageUrl:    { type: String, default: '' },
+    imagePublicId: { type: String, default: '' },
     emoji:       { type: String, default: '🪔', maxlength: 8 },
     // Optional link — if set, tapping the banner filters BrowsePoojas
     // to poojas of this category (e.g. 'Ganesh Puja' for Ganesh Chaturthi).

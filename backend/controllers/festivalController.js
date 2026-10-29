@@ -1,4 +1,17 @@
+const fs = require('fs');
+const path = require('path');
 const Festival = require('../models/Festival');
+
+const getImageUrl = (req, filename) => {
+  if (!filename) return '';
+  return `${req.protocol}://${req.get('host')}/uploads/festivals/${path.basename(filename)}`;
+};
+
+const deleteOldFile = (filename) => {
+  if (!filename) return;
+  const fp = path.join(__dirname, '../uploads/festivals', path.basename(filename));
+  if (fs.existsSync(fp)) { try { fs.unlinkSync(fp); } catch (_) {} }
+};
 
 /* ─────────────────────────────────────────────
    PUBLIC — GET /api/festivals/upcoming
@@ -37,16 +50,26 @@ exports.create = async (req, res) => {
   if (!name?.trim() || !date) {
     return res.status(400).json({ success: false, message: 'name and date are required.' });
   }
-  const festival = await Festival.create({
+  const data = {
     name:          name.trim(),
     date:          new Date(date),
     description:   req.body.description || '',
     imageUrl:      req.body.imageUrl || '',
     emoji:         req.body.emoji || '🪔',
     poojaCategory: req.body.poojaCategory || '',
-    isActive:      req.body.isActive !== undefined ? Boolean(req.body.isActive) : true,
+    // Mongoose casts the string 'true'/'false' that multipart form-data
+    // sends just as correctly as a real boolean, so no manual Boolean()
+    // wrapping here (that would make the string 'false' truthy).
+    isActive:      req.body.isActive !== undefined ? req.body.isActive : true,
     sortOrder:     Number(req.body.sortOrder) || 0,
-  });
+  };
+
+  if (req.file) {
+    data.imageUrl = getImageUrl(req, req.file.filename);
+    data.imagePublicId = req.file.filename;
+  }
+
+  const festival = await Festival.create(data);
   res.status(201).json({ success: true, data: festival });
 };
 
@@ -54,15 +77,23 @@ exports.create = async (req, res) => {
    ADMIN — PATCH /api/festivals/:id
 ───────────────────────────────────────────── */
 exports.update = async (req, res) => {
+  const existing = await Festival.findById(req.params.id);
+  if (!existing) return res.status(404).json({ success: false, message: 'Festival not found.' });
+
   const updates = {};
   const fields = ['name', 'description', 'imageUrl', 'emoji', 'poojaCategory', 'isActive', 'sortOrder'];
   fields.forEach((f) => { if (req.body[f] !== undefined) updates[f] = req.body[f]; });
   if (req.body.date !== undefined) updates.date = new Date(req.body.date);
 
+  if (req.file) {
+    deleteOldFile(existing.imagePublicId);
+    updates.imageUrl = getImageUrl(req, req.file.filename);
+    updates.imagePublicId = req.file.filename;
+  }
+
   const festival = await Festival.findByIdAndUpdate(req.params.id, updates, {
     new: true, runValidators: true,
   });
-  if (!festival) return res.status(404).json({ success: false, message: 'Festival not found.' });
   res.json({ success: true, data: festival });
 };
 
