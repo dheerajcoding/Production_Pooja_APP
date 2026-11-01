@@ -54,7 +54,6 @@ export default function TermsConditions() {
             <div className="text-xs text-gray-700 space-y-1">
               <p>📧 Email: <a href={`mailto:${COMPANY_META.supportEmail}`} className="text-primary-600 underline font-medium">{COMPANY_META.supportEmail}</a></p>
               <p>📞 Phone: <a href={`tel:${COMPANY_META.supportPhone}`} className="text-primary-600 underline font-medium">{COMPANY_META.supportPhone}</a></p>
-              <p>📍 Office: {COMPANY_META.address}</p>
             </div>
           </div>
         </div>

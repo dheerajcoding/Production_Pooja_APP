@@ -4,14 +4,15 @@
  *
  * Contact:
  *   +91 70420 64094 · Ritualmitra.info@gmail.com
- *   Dabri, Dwarka, New Delhi - 110045, India
+ *
+ * Legal entity: Aaradhyanam Rituals Pvt Ltd (operates the Ritual Mitra
+ * platform/app — see the "Agreement to Terms" section below).
  */
 
 export const COMPANY_META = {
   brand: 'Ritual Mitra',
-  legalName: 'Ritual Mitra',
+  legalName: 'Aaradhyanam Rituals Pvt Ltd',
   tagline: 'Spiritual, Devotional & Astrological Services',
-  address: 'Dabri, Dwarka, New Delhi - 110045, India',
   effective: '17 July 2026',
   supportEmail: 'Ritualmitra.info@gmail.com',
   supportPhone: '+91 70420 64094',
@@ -118,10 +119,9 @@ export const DELETION_SECTIONS = [
     title: 'Contact Information for Data Inquiries',
     body: [
       'For any questions, clarifications, or expedited deletion requests, please contact our Data Grievance Officer:',
-      '• Company: Ritual Mitra',
+      '• Company: Aaradhyanam Rituals Pvt Ltd (operates Ritual Mitra)',
       '• Support Email: Ritualmitra.info@gmail.com',
       '• Support Phone: +91 70420 64094',
-      '• Address: Dabri, Dwarka, New Delhi - 110045, India',
     ],
   },
 ];
@@ -194,7 +194,6 @@ export const PRIVACY_SECTIONS = [
       'If you have questions regarding this Privacy Policy, contact us at:',
       '• Email: Ritualmitra.info@gmail.com',
       '• Phone: +91 70420 64094',
-      '• Address: Dabri, Dwarka, New Delhi - 110045, India',
     ],
   },
 ];
@@ -209,6 +208,7 @@ export const TERMS_SECTIONS = [
     body: [
       'These Terms and Conditions constitute a legally binding agreement between you and Ritual Mitra governing your access to and use of our mobile application, website, and spiritual services.',
       'By accessing or using Ritual Mitra, you agree to be bound by these Terms and our Privacy and Cancellation policies.',
+      'Ritual Mitra is operated by Aaradhyanam Rituals Pvt Ltd ("Company," "we," "our," "us").',
     ],
   },
   {
