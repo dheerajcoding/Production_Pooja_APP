@@ -18,11 +18,14 @@ exports.getAll = async (req, res) => {
   const includeInactive = req.query.all === 'true';
   const query = includeInactive ? {} : { isActive: true };
   // ?showOn=home or ?showOn=online — restrict to categories meant for that
-  // screen (a category marked 'both' always matches). Admin's "manage all"
-  // view omits this so it always sees every category regardless of scope.
+  // screen. Excluding the OTHER scope (rather than requiring an explicit
+  // match) means categories created before this field existed — which have
+  // no `showOn` stored at all — still show everywhere, same as 'both'.
+  // Admin's "manage all" view omits this so it always sees every category.
   const { showOn } = req.query;
   if (showOn === 'home' || showOn === 'online') {
-    query.showOn = { $in: [showOn, 'both'] };
+    const otherScope = showOn === 'home' ? 'online' : 'home';
+    query.showOn = { $ne: otherScope };
   }
   const categories = await PoojaCategory.find(query).sort({ sortOrder: 1, name: 1 });
   res.json({ success: true, data: categories });
