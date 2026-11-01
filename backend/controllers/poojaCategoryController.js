@@ -1,5 +1,6 @@
 const PoojaCategory = require('../models/PoojaCategory');
 const Pooja         = require('../models/Pooja');
+const OnlinePooja   = require('../models/OnlinePooja');
 
 const slugify = (s) => String(s || '')
   .toLowerCase()
@@ -58,7 +59,11 @@ exports.update = async (req, res) => {
     if (trimmed !== category.name) {
       category.name = trimmed;
       category.slug = slugify(trimmed);
+      // Cascade to both Home Pooja and Temple (Online) Pooja — both store
+      // the category as free text by name, not a reference, so a rename
+      // would otherwise silently orphan items from their category.
       await Pooja.updateMany({ category: oldName }, { $set: { category: trimmed } });
+      await OnlinePooja.updateMany({ category: oldName }, { $set: { category: trimmed } });
     }
   }
   ['emoji', 'isActive', 'sortOrder'].forEach((f) => {
@@ -79,7 +84,11 @@ exports.remove = async (req, res) => {
   const category = await PoojaCategory.findById(req.params.id);
   if (!category) return res.status(404).json({ success: false, message: 'Category not found.' });
 
-  const inUseCount = await Pooja.countDocuments({ category: category.name, isActive: true });
+  const [poojaInUse, onlinePoojaInUse] = await Promise.all([
+    Pooja.countDocuments({ category: category.name, isActive: true }),
+    OnlinePooja.countDocuments({ category: category.name, isActive: true }),
+  ]);
+  const inUseCount = poojaInUse + onlinePoojaInUse;
   if (inUseCount > 0) {
     const reassignTo = req.query.reassignTo;
     if (!reassignTo) {
@@ -94,6 +103,7 @@ exports.remove = async (req, res) => {
       return res.status(400).json({ success: false, message: `Target category '${reassignTo}' not found or inactive.` });
     }
     await Pooja.updateMany({ category: category.name }, { $set: { category: target.name } });
+    await OnlinePooja.updateMany({ category: category.name }, { $set: { category: target.name } });
   }
 
   await PoojaCategory.findByIdAndDelete(req.params.id);

@@ -15,9 +15,10 @@ const deleteOldFile = (filename) => {
 
 /* ─────────────────────────────────────────────
    PUBLIC — GET /api/festivals/upcoming
-   Returns the next N active festivals sorted
-   by date. Past festivals are excluded so the
-   banner never shows stale entries.
+   Returns the next N active festivals sorted by date.
+   Past dated festivals are excluded so the banner never
+   shows stale entries; dateless banners (no specific date)
+   always qualify.
 ───────────────────────────────────────────── */
 exports.getUpcoming = async (req, res) => {
   const limit = Math.min(20, Math.max(1, Number(req.query.limit) || 6));
@@ -25,7 +26,7 @@ exports.getUpcoming = async (req, res) => {
 
   const festivals = await Festival.find({
     isActive: true,
-    date: { $gte: today },
+    $or: [{ date: { $gte: today } }, { date: null }],
   })
     .sort({ date: 1, sortOrder: 1 })
     .limit(limit);
@@ -43,16 +44,17 @@ exports.getAll = async (req, res) => {
 
 /* ─────────────────────────────────────────────
    ADMIN — POST /api/festivals
-   Body: { name, date, description?, imageUrl?, emoji?, poojaCategory?, isActive?, sortOrder? }
+   Body: { name, date?, description?, imageUrl?, emoji?, poojaCategory?, isActive?, sortOrder? }
+   `date` is optional — a banner can be added with just a name.
 ───────────────────────────────────────────── */
 exports.create = async (req, res) => {
-  const { name, date } = req.body;
-  if (!name?.trim() || !date) {
-    return res.status(400).json({ success: false, message: 'name and date are required.' });
+  const { name } = req.body;
+  if (!name?.trim()) {
+    return res.status(400).json({ success: false, message: 'name is required.' });
   }
   const data = {
     name:          name.trim(),
-    date:          new Date(date),
+    date:          req.body.date ? new Date(req.body.date) : null,
     description:   req.body.description || '',
     imageUrl:      req.body.imageUrl || '',
     emoji:         req.body.emoji || '🪔',
@@ -83,7 +85,7 @@ exports.update = async (req, res) => {
   const updates = {};
   const fields = ['name', 'description', 'imageUrl', 'emoji', 'poojaCategory', 'isActive', 'sortOrder'];
   fields.forEach((f) => { if (req.body[f] !== undefined) updates[f] = req.body[f]; });
-  if (req.body.date !== undefined) updates.date = new Date(req.body.date);
+  if (req.body.date !== undefined) updates.date = req.body.date ? new Date(req.body.date) : null;
 
   if (req.file) {
     deleteOldFile(existing.imagePublicId);

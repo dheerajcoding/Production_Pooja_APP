@@ -10,7 +10,9 @@ const mongoose = require('mongoose');
 const festivalSchema = new mongoose.Schema(
   {
     name:        { type: String, required: true, trim: true, maxlength: 100 },
-    date:        { type: Date,   required: true },
+    // Optional — a banner can be added with just a name (e.g. a general
+    // promo) and no specific date. Dated festivals still sort by date.
+    date:        { type: Date,   default: null },
     description: { type: String, default: '', maxlength: 500 },
     imageUrl:    { type: String, default: '' },
     imagePublicId: { type: String, default: '' },

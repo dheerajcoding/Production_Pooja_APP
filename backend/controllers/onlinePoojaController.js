@@ -94,7 +94,7 @@ exports.bookOnlinePooja = async (req, res) => {
     return res.status(400).json({ success: false, message: 'Contact number is required.' });
   }
   if (!address || !address.trim()) {
-    return res.status(400).json({ success: false, message: 'Delivery address is required for prasad & certificates.' });
+    return res.status(400).json({ success: false, message: 'Delivery address is required for certificates.' });
   }
 
   const pooja = await OnlinePooja.findById(req.params.id);
