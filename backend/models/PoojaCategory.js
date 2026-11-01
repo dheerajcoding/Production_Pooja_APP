@@ -15,6 +15,10 @@ const poojaCategorySchema = new mongoose.Schema(
     emoji:     { type: String, default: '🪔', maxlength: 8 },
     isActive:  { type: Boolean, default: true },
     sortOrder: { type: Number,  default: 0 },
+    // Where this category is offered as a filter: Home Pooja browse screen,
+    // Online/Temple Pooja browse screen, or both. Defaults to 'both' so
+    // existing categories keep showing everywhere they already did.
+    showOn:    { type: String, enum: ['home', 'online', 'both'], default: 'both' },
   },
   { timestamps: true }
 );

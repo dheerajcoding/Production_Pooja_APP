@@ -17,6 +17,13 @@ const slugify = (s) => String(s || '')
 exports.getAll = async (req, res) => {
   const includeInactive = req.query.all === 'true';
   const query = includeInactive ? {} : { isActive: true };
+  // ?showOn=home or ?showOn=online — restrict to categories meant for that
+  // screen (a category marked 'both' always matches). Admin's "manage all"
+  // view omits this so it always sees every category regardless of scope.
+  const { showOn } = req.query;
+  if (showOn === 'home' || showOn === 'online') {
+    query.showOn = { $in: [showOn, 'both'] };
+  }
   const categories = await PoojaCategory.find(query).sort({ sortOrder: 1, name: 1 });
   res.json({ success: true, data: categories });
 };
@@ -33,12 +40,14 @@ exports.create = async (req, res) => {
   const existing = await PoojaCategory.findOne({ $or: [{ name: name.trim() }, { slug }] });
   if (existing) return res.status(400).json({ success: false, message: 'Category with that name already exists.' });
 
+  const showOn = ['home', 'online', 'both'].includes(req.body.showOn) ? req.body.showOn : 'both';
   const category = await PoojaCategory.create({
     name:      name.trim(),
     slug,
     emoji:     req.body.emoji || '🪔',
     sortOrder: Number(req.body.sortOrder) || 0,
     isActive:  req.body.isActive !== undefined ? Boolean(req.body.isActive) : true,
+    showOn,
   });
   res.status(201).json({ success: true, data: category });
 };
@@ -69,6 +78,9 @@ exports.update = async (req, res) => {
   ['emoji', 'isActive', 'sortOrder'].forEach((f) => {
     if (req.body[f] !== undefined) category[f] = req.body[f];
   });
+  if (req.body.showOn !== undefined && ['home', 'online', 'both'].includes(req.body.showOn)) {
+    category.showOn = req.body.showOn;
+  }
 
   await category.save();
   res.json({ success: true, data: category });
